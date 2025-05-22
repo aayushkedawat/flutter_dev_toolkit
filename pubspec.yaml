@@ -1,7 +1,11 @@
 name: flutter_dev_toolkit
-description: "A new Flutter package project."
+description: "A powerful, modular in-app developer console for Flutter apps. Includes logs, network inspector, route tracker, performance tools, and plugin system."
 version: 1.0.0
-homepage:
+homepage: https://github.com/aayushkedawat/flutter_dev_toolkit
+repository: https://github.com/aayushkedawat/flutter_dev_toolkit
+issue_tracker: https://github.com/aayushkedawat/flutter_dev_toolkit/issues
+documentation: https://github.com/aayushkedawat/flutter_dev_toolkit#readme
+
 
 environment:
   sdk: ^3.7.0
@@ -55,3 +59,9 @@ flutter:
   #
   # For details regarding fonts in packages, see
   # https://flutter.dev/to/font-from-package
+topics:
+  - debug
+  - logger
+  - network
+  - developer-tools
+  - flutter
