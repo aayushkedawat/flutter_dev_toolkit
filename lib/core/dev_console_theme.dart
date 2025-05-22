@@ -1,0 +1,1 @@
+enum DevConsoleTheme { dark, light }
