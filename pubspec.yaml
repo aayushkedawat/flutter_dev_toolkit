@@ -12,13 +12,13 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
-  dio:
+  dio: ">=5.0.0 <6.0.0"
   flutter:
     sdk: flutter
-  flutter_bloc:
-  bloc:
-  http:
-  share_plus:
+  flutter_bloc: ">=8.0.0 <10.0.0"
+  bloc: ">=8.0.0 <10.0.0"
+  http: ">=0.13.0 <2.0.0"
+  share_plus: ">=6.0.0 <12.0.0"
 
 dev_dependencies:
   flutter_test:
@@ -34,3 +34,24 @@ topics:
   - bloc observer
   - developer-tools
   - flutter
+screenshots:
+  - path: screenshots/logs.png
+    description: "Log console showing real-time filtered logs with colored severity levels."
+  - path: screenshots/actions.png
+    description: "Actions tab with options to export and clear logs and route data."
+  - path: screenshots/bloc_inspector_details.png
+    description: "Detailed view of a selected Bloc state change in the App State Inspector."
+  - path: screenshots/bloc_inspector.png
+    description: "App State Inspector showing a list of recent Bloc state transitions."
+  - path: screenshots/device_info.png
+    description: "Device Info plugin displaying hardware and OS specifications."
+  - path: screenshots/network_details_error.png
+    description: "Network inspector displaying error response details of an API call."
+  - path: screenshots/network_details_request.png
+    description: "Request tab showing headers, parameters, and payload of the API request."
+  - path: screenshots/network_details_response.png
+    description: "Response tab displaying the parsed JSON body of the API response."
+  - path: screenshots/network_interceptor.png
+    description: "List of captured network calls with filter and replay support."
+  - path: screenshots/route.png
+    description: "Route tab showing navigation stack and screen transition durations."
