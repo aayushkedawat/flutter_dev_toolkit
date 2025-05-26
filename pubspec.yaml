@@ -1,6 +1,6 @@
 name: flutter_dev_toolkit
 description: "A powerful, modular in-app developer console for Flutter apps. Includes logs, network inspector, route tracker, performance tools, and plugin system."
-version: 1.1.1
+version: 1.1.2
 homepage: https://github.com/aayushkedawat/flutter_dev_toolkit
 repository: https://github.com/aayushkedawat/flutter_dev_toolkit
 issue_tracker: https://github.com/aayushkedawat/flutter_dev_toolkit/issues
@@ -12,7 +12,7 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
-  dio: ">=5.0.0 <6.0.0"
+  dio: ">=5.2.0 <6.0.0"
   flutter:
     sdk: flutter
   flutter_bloc: ">=8.0.0 <10.0.0"

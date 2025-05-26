@@ -1,5 +1,9 @@
+## 1.1.2
+- Minor Fixes
+
 ## 1.1.1
 - Minor Fixes
+
 ## 1.1.0
 ### Added
 - 🚀 New App State Inspector tab
