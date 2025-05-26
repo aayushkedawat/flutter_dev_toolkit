@@ -15,7 +15,6 @@ Track logs, API calls, navigation, performance, app state, and add your own plug
 - ✅ Export logs
 - ✅ Plugin system for custom tools
 - ✅ App State Inspector (Bloc support)
-- 🔜 Support for Riverpod, Provider, GetX
 
 ---
 
@@ -111,10 +110,6 @@ Inspect app-wide state transitions from supported frameworks.
 #### ✅ Current Support:
 - Bloc via `DevBlocObserver`
 
-#### 🔜 Coming Soon:
-- Riverpod via `ProviderObserver`
-- Provider, GetX
-
 #### Usage:
 
 ```dart
@@ -150,6 +145,12 @@ Log custom messages using:
 FlutterDevToolkit.logger.log('Hello!');
 FlutterDevToolkit.logger.log('Something went wrong', level: LogLevel.error);
 ```
+
+---
+
+## 🖼️ Screenshots
+
+<h4>Log Console</h4> <img src="screenshots/logs.png" width="260"/> <h4>Actions Tab</h4> <img src="screenshots/actions.png" width="260"/> <h4>Bloc Inspector – Detail View</h4> <img src="screenshots/bloc_inspector_details.png" width="260"/> <h4>Bloc Inspector – Overview</h4> <img src="screenshots/bloc_inspector.png" width="260"/> <h4>Device Info</h4> <img src="screenshots/device_info.png" width="260"/> <h4>Network Error Detail</h4> <img src="screenshots/network_details_error.png" width="260"/> <h4>Network Request</h4> <img src="screenshots/network_details_request.png" width="260"/> <h4>Network Response</h4> <img src="screenshots/network_details_response.png" width="260"/> <h4>Network Interceptor</h4> <img src="screenshots/network_interceptor.png" width="260"/> <h4>Route Tracker</h4> <img src="screenshots/route.png" width="260"/>
 
 ---
 
