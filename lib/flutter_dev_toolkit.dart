@@ -1,5 +1,3 @@
-library flutter_dev_toolkit;
-
 export 'core/dev_toolkit_config.dart';
 export 'core/logger_interface.dart';
 export 'core/default_logger.dart';
