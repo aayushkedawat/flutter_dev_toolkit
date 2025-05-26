@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../interceptors/network/network_log.dart';
 
 class NetworkLogDetailPage extends StatelessWidget {
@@ -12,6 +15,19 @@ class NetworkLogDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: Text('${log.method} ${log.url}'),
         backgroundColor: log.isError ? Colors.red : Colors.green,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Export Log',
+            onPressed: () {
+              final export = _formatLogForExport(log);
+              Clipboard.setData(ClipboardData(text: export));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Log copied to clipboard')),
+              );
+            },
+          ),
+        ],
       ),
       body: DefaultTabController(
         length: 3,
@@ -29,6 +45,35 @@ class NetworkLogDetailPage extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatLogForExport(NetworkLog log) {
+    final map = {
+      'method': log.method,
+      'url': log.url,
+      'statusCode': log.statusCode,
+      'duration': log.duration.toString(),
+      'requestHeaders': log.requestHeaders,
+      'requestBody': log.requestBody,
+      'responseBody': _parseIfJson(log.responseBody),
+      'isError': log.isError,
+    };
+
+    try {
+      return const JsonEncoder.withIndent('  ').convert(map);
+    } catch (_) {
+      return map.toString();
+    }
+  }
+
+  dynamic _parseIfJson(String? input) {
+    if (input == null) return null;
+
+    try {
+      return json.decode(input);
+    } catch (_) {
+      return input; // return as-is if not valid JSON
+    }
   }
 }
 
@@ -95,7 +140,7 @@ class _KeyValueView extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 4),
-                SelectableText(entry.value),
+                Text(entry.value),
                 const Divider(),
               ],
             );

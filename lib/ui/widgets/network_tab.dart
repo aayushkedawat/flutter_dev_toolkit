@@ -87,10 +87,14 @@ class _NetworkTabState extends State<NetworkTab> {
                   children: [
                     Text(
                       '${log.method} ${log.url}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                     Text(
                       'Status: ${log.statusCode} | Time: ${log.duration.inMilliseconds}ms',
+                      style: TextStyle(color: Colors.black),
                     ),
                     if (log.requestBody != null)
                       Text('Request: ${log.requestBody}'),
@@ -99,7 +103,10 @@ class _NetworkTabState extends State<NetworkTab> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         TextButton(
-                          child: const Text('Details'),
+                          child: const Text(
+                            'Details',
+                            style: TextStyle(color: Colors.deepPurple),
+                          ),
                           onPressed: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
@@ -110,7 +117,10 @@ class _NetworkTabState extends State<NetworkTab> {
                           },
                         ),
                         TextButton(
-                          child: const Text('Replay'),
+                          child: const Text(
+                            'Replay',
+                            style: TextStyle(color: Colors.deepPurple),
+                          ),
                           onPressed: () => _replay(log),
                         ),
                       ],

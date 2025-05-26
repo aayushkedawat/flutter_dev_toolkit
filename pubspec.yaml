@@ -12,11 +12,13 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
-  dio: ^5.8.0+1
+  dio:
   flutter:
     sdk: flutter
-  http: ^1.4.0
-  share_plus: ^11.0.0
+  flutter_bloc:
+  bloc:
+  http:
+  share_plus:
 
 dev_dependencies:
   flutter_test:

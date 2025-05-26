@@ -42,7 +42,7 @@ class DeviceInfoPlugin extends DevToolkitPlugin {
                         e.key,
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
-                      SelectableText(e.value),
+                      Text(e.value),
                       const Divider(),
                     ],
                   );

@@ -19,21 +19,21 @@ class HttpInterceptor extends http.BaseClient {
       requestBody = request.body;
     }
 
-    http.StreamedResponse response;
+    http.StreamedResponse originalResponse;
     try {
-      response = await _inner.send(request);
+      originalResponse = await _inner.send(request);
     } catch (e) {
       FlutterDevToolkit.logger.log(
         '[NETWORK] ❌ ERROR $method $url\n  Exception: $e',
         level: LogLevel.error,
       );
-
       rethrow;
     } finally {
       stopwatch.stop();
     }
-    final responseBody =
-        await response.stream.bytesToString(); // ✅ consume stream here
+
+    final responseBytes = await originalResponse.stream.toBytes();
+    final responseBody = String.fromCharCodes(responseBytes);
 
     final log = NetworkLog(
       method: method,
@@ -41,9 +41,9 @@ class HttpInterceptor extends http.BaseClient {
       duration: stopwatch.elapsed,
       requestHeaders: request.headers,
       requestBody: requestBody,
-      statusCode: response.statusCode,
+      statusCode: originalResponse.statusCode,
       responseBody: responseBody,
-      isError: response.statusCode >= 400,
+      isError: originalResponse.statusCode >= 400,
     );
 
     FlutterDevToolkit.logger.log(
@@ -51,6 +51,16 @@ class HttpInterceptor extends http.BaseClient {
       level: log.isError ? LogLevel.error : LogLevel.info,
     );
     NetworkLogStore.add(log);
-    return response;
+
+    return http.StreamedResponse(
+      Stream.fromIterable([responseBytes]),
+      originalResponse.statusCode,
+      contentLength: originalResponse.contentLength,
+      request: originalResponse.request,
+      headers: originalResponse.headers,
+      isRedirect: originalResponse.isRedirect,
+      persistentConnection: originalResponse.persistentConnection,
+      reasonPhrase: originalResponse.reasonPhrase,
+    );
   }
 }
