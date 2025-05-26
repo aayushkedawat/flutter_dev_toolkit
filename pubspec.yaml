@@ -30,8 +30,6 @@ topics:
   - debug
   - logger
   - network
-  - app-state observer
-  - bloc observer
   - developer-tools
   - flutter
 screenshots:
