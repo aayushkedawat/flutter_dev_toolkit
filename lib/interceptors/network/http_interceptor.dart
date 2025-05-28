@@ -1,4 +1,5 @@
 import 'package:http/http.dart' as http;
+import '../../core/logger_interface.dart';
 import '../../core/network_log_store.dart';
 import '../../flutter_dev_toolkit.dart';
 import 'network_log.dart';

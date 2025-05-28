@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/dio_interceptor.dart';
 

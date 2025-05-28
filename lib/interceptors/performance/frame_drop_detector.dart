@@ -1,4 +1,5 @@
 import 'package:flutter/scheduler.dart';
+import '../../core/logger_interface.dart';
 import '../../flutter_dev_toolkit.dart';
 
 class FrameDropDetector {

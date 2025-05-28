@@ -1,41 +1,62 @@
-export 'core/dev_toolkit_config.dart';
-export 'core/logger_interface.dart';
-export 'core/default_logger.dart';
-
 import 'package:flutter/widgets.dart';
+import 'package:flutter_dev_toolkit/interceptors/lifecycle_interceptor.dart';
 
 import 'core/dev_toolkit_config.dart';
-import 'core/logger_interface.dart';
-import 'interceptors/interceptor_registry.dart';
-
 import 'core/dev_toolkit_plugin.dart';
+import 'core/logger_interface.dart';
 import 'core/plugin_registry.dart';
+import 'interceptors/interceptor_registry.dart';
 
 class FlutterDevToolkit with WidgetsBindingObserver {
   static late LoggerInterface logger;
-  static final List<DevToolkitPlugin> _plugins = [];
   static late DevToolkitConfig config;
+
+  // Plugin storage
+  static final List<DevToolkitPlugin> _builtInPlugins = [];
+  static final List<DevToolkitPlugin> _customPlugins = [];
+
+  static final ValueNotifier<DevToolkitPlugin?> activePluginNotifier =
+      ValueNotifier(null);
+
+  static DevToolkitPlugin? get activePlugin => activePluginNotifier.value;
+
+  static void setActivePlugin(DevToolkitPlugin? plugin) {
+    activePluginNotifier.value = plugin;
+  }
 
   static void init({required DevToolkitConfig config}) {
     FlutterDevToolkit.config = config;
     logger = config.logger;
-    logger.log('Initializing FlutterDevToolkit...');
+    logger.log('[DEBUG] Initializing FlutterDevToolkit...');
+
     InterceptorRegistry.register(config);
     WidgetsBinding.instance.addObserver(_self);
-    PluginRegistry.registerBuiltIns();
-    for (var plugin in _plugins) {
+    LifecycleInterceptor.init();
+    PluginRegistry.registerBuiltInPlugins(); // Populates _builtInPlugins
+
+    // Call plugin onInit hooks
+    for (var plugin in plugins) {
       plugin.onInit();
     }
-    logger.log('FlutterDevToolkit initialized');
+
+    logger.log('[DEBUG] FlutterDevToolkit initialized');
   }
 
-  static final _self = FlutterDevToolkit._();
+  static void registerPlugin(DevToolkitPlugin plugin) {
+    _customPlugins.add(plugin);
+  }
 
+  static List<DevToolkitPlugin> get plugins => [
+    ..._builtInPlugins,
+    ..._customPlugins,
+  ];
+
+  static final _self = FlutterDevToolkit._();
   FlutterDevToolkit._();
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    for (final plugin in _plugins) {
+    for (final plugin in plugins) {
       switch (state) {
         case AppLifecycleState.resumed:
           plugin.onResume();
@@ -49,9 +70,7 @@ class FlutterDevToolkit with WidgetsBindingObserver {
     }
   }
 
-  static void registerPlugin(DevToolkitPlugin plugin) {
-    _plugins.add(plugin);
+  static void addBuiltInPlugin(DevToolkitPlugin plugin) {
+    _builtInPlugins.add(plugin);
   }
-
-  static List<DevToolkitPlugin> get plugins => List.unmodifiable(_plugins);
 }

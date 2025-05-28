@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../core/logger_interface.dart';
 import '../../core/network_log_store.dart';
 import '../../flutter_dev_toolkit.dart';
 import '../../interceptors/network/network_log.dart';
 import 'package:http/http.dart' as http;
 
-import '../network_log_detail_page.dart';
+import '../../ui/network_log_detail_page.dart';
 
 class NetworkTab extends StatefulWidget {
   const NetworkTab({super.key});
@@ -50,11 +51,13 @@ class _NetworkTabState extends State<NetworkTab> {
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
+                  style: TextStyle(color: Colors.black),
                   decoration: const InputDecoration(
                     hintText: 'Search URL or status...',
                     isDense: true,
                     filled: true,
                     fillColor: Colors.white,
+
                     border: OutlineInputBorder(),
                   ),
                   onChanged: (val) => setState(() => _searchQuery = val),

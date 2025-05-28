@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dev_toolkit/core/dev_toolkit_config.dart';
+import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/route_interceptor.dart';
+import 'package:flutter_dev_toolkit/core/default_logger.dart';
 
 import 'package:flutter_dev_toolkit/ui/log_overlay.dart';
 
@@ -10,10 +13,13 @@ import 'home_page.dart';
 void main() {
   FlutterDevToolkit.init(
     config: DevToolkitConfig(
-      disableBuiltInPlugins: [],
+      disableBuiltInPlugins: [
+        // BuiltInPluginType.logs,
+        // BuiltInPluginType.network,
+        // BuiltInPluginType.routes,
+        // BuiltInPluginType.deviceInfo,
+      ],
       logger: DefaultLogger(),
-      enableRouteInterceptor: true,
-      enableNetworkInterceptor: true,
     ),
   );
 

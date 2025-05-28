@@ -17,7 +17,7 @@ class NetworkLogDetailPage extends StatelessWidget {
         backgroundColor: log.isError ? Colors.red : Colors.green,
         actions: [
           IconButton(
-            icon: const Icon(Icons.upload_file),
+            icon: const Icon(Icons.share),
             tooltip: 'Export Log',
             onPressed: () {
               final export = _formatLogForExport(log);

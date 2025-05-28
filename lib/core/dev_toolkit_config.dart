@@ -1,19 +1,12 @@
+import '../models/built_in_plugin_type.dart';
 import 'logger_interface.dart';
 
 class DevToolkitConfig {
   final LoggerInterface logger;
-  final bool enableNetworkInterceptor;
-  final bool enableRouteInterceptor;
-  final bool enableLifecycleInterceptor;
-
-  final List<Type> disableBuiltInPlugins;
+  final List<BuiltInPluginType> disableBuiltInPlugins;
 
   DevToolkitConfig({
     required this.logger,
-    this.enableNetworkInterceptor = false,
-    this.enableRouteInterceptor = false,
-    this.enableLifecycleInterceptor = false,
-
-    required this.disableBuiltInPlugins,
+    this.disableBuiltInPlugins = const [],
   });
 }

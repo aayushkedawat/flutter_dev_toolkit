@@ -2,22 +2,22 @@
 
 🚀 A modular in-app developer console for Flutter apps.
 
-Track logs, API calls, navigation, performance, app state, and add your own plugins — all in real time, inside your app.
+Track logs, API calls, navigation, lifecycle events, screen transitions, app state, and more — all in real time, inside your app.
 
 [![pub package](https://img.shields.io/pub/v/flutter_dev_toolkit.svg)](https://pub.dev/packages/flutter_dev_toolkit)
 [![GitHub](https://img.shields.io/github/stars/aayushkedawat/flutter_dev_toolkit?style=social)](https://github.com/aayushkedawat/flutter_dev_toolkit)
-
 
 ---
 
 ## ✨ Features
 
-- ✅ In-app Dev Console
-- ✅ Colored logs with filtering
-- ✅ Network call inspector (`http`, `dio`, `retrofit`)
+- ✅ In-app Dev Console with floating overlay
+- ✅ Colored logs with filtering and tagging
+- ✅ Network call inspector (supports `http`, `dio`, and `retrofit`)
 - ✅ Route stack and screen duration tracker
-- ✅ Export logs
-- ✅ Plugin system for custom tools
+- ✅ Lifecycle event logging
+- ✅ Export logs, network calls, and route data
+- ✅ Plugin system for adding custom tools
 - ✅ App State Inspector (Bloc support)
 
 ---
@@ -41,17 +41,19 @@ flutter pub get
 
 ## 🚀 Getting Started
 
-### Initialize the toolkit in `main.dart`:
+### 1. Initialize the toolkit
 
 ```dart
 void main() {
   FlutterDevToolkit.init(
     config: DevToolkitConfig(
-      disableBuiltInPlugins: [],
       logger: DefaultLogger(),
-      enableRouteInterceptor: true,
-      enableNetworkInterceptor: true,
-      enableLifecycleInterceptor: true,
+      disableBuiltInPlugins: [
+        // BuiltInPluginType.logs,
+        // BuiltInPluginType.network,
+        // BuiltInPluginType.routes,
+        // BuiltInPluginType.deviceInfo,
+      ],
     ),
   );
 
@@ -59,7 +61,7 @@ void main() {
 }
 ```
 
-### Add the Dev Console to your widget tree:
+### 2. Add Dev Console Overlay
 
 ```dart
 MaterialApp(
@@ -71,9 +73,42 @@ MaterialApp(
       ],
     );
   },
-  home: const SplashScreen(),
   navigatorObservers: [RouteInterceptor.instance],
 );
+```
+
+---
+
+## 🔌 Network Setup
+
+### 🔹 Using `http` package
+
+Replace the default client with HttpInterceptor from the toolkit:
+
+```dart
+import 'package:http/http.dart' as http;
+import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
+
+final client = HttpInterceptor(); // Instead of http.Client()
+
+final response = await client.get(Uri.parse('https://example.com'));
+```
+
+### 🔹 Using `dio`
+
+Register Dio interceptor:
+
+```dart
+final dio = Dio();
+dio.interceptors.add(DioNetworkInterceptor());
+```
+
+### 🔹 Using `retrofit`
+
+Pass the configured Dio instance to your Retrofit client:
+
+```dart
+final api = MyApiClient(Dio()..interceptors.add(DioNetworkInterceptor()));
 ```
 
 ---
@@ -86,69 +121,54 @@ You can add custom developer tools as plugins:
 class CounterPlugin extends DevToolkitPlugin {
   @override 
   String get name => 'Counter';
+
   @override 
   IconData get icon => Icons.exposure_plus_1;
 
   @override 
-  void onInit() {
-    debugPrint('CounterPlugin loaded!');
-  }
+  void onInit() => debugPrint('CounterPlugin loaded!');
 
   @override 
   Widget buildTab(BuildContext context) => Center(child: Text('Counter Tab'));
 }
-```
 
-Register it before `runApp`:
-
-```dart
 FlutterDevToolkit.registerPlugin(CounterPlugin());
 ```
 
 ---
 
-### 🔍 App State Inspector (Built-in)
+## 🔍 App State Inspector
 
-Inspect app-wide state transitions from supported frameworks.
-
-#### ✅ Current Support:
-- Bloc via `DevBlocObserver`
-
-#### Usage:
+Inspect state transitions (Bloc only for now).
 
 ```dart
-// Add this line before initialising blocs
 Bloc.observer = DevBlocObserver();
 
-// Add this line after FlutterDevToolkit.init();
 FlutterDevToolkit.registerPlugin(
   AppStateInspectorPlugin([
-    BlocAdapter(), // built-in
+    BlocAdapter(),
   ]),
 );
 ```
 
-This shows:
-- State source (Bloc type)
-- Timestamp
-- Copy to clipboard support
+---
+
+## 📝 Logging
+
+```dart
+FlutterDevToolkit.logger.log('Message');
+FlutterDevToolkit.logger.log('Error occurred', level: LogLevel.error);
+```
 
 ---
 
 ## 📤 Exporting
 
-You can export logs and routes via the **Actions Tab**.
+You can export relevant data directly from each plugin’s tab:
 
----
-
-## 📝 Custom Logs
-
-Log custom messages using:
-
-```dart
-FlutterDevToolkit.logger.log('Hello!');
-FlutterDevToolkit.logger.log('Something went wrong', level: LogLevel.error);
-```
+- Logs Plugin → Export filtered logs
+- Network Plugin → Export captured network calls
+- Route Tracker → Export route stack and navigation history
 
 ---
 

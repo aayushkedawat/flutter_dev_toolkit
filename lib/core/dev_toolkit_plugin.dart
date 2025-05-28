@@ -17,4 +17,7 @@ abstract class DevToolkitPlugin {
   Widget buildTab(BuildContext context);
 
   Widget? buildConfig(BuildContext context) => null;
+
+  /// Optional actions to show in the console toolbar
+  List<Widget> buildActions(BuildContext context) => [];
 }
