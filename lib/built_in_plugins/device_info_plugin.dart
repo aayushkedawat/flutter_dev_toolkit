@@ -11,15 +11,36 @@ class DeviceInfoPlugin extends DevToolkitPlugin {
 
   @override
   IconData get icon => Icons.devices;
+  Map<String, dynamic> info = {};
 
   @override
   void onInit() {}
 
   @override
+  List<Widget> buildActions(BuildContext context) {
+    ElevatedButton.icon(
+      icon: const Icon(Icons.upload_file),
+      label: const Text('Export'),
+      onPressed: () {
+        String shareData = '';
+
+        for (var element in info.entries) {
+          shareData += '${element.key} : ${element.value}\n';
+        }
+        FlutterDevToolkit.logger.log('📤 Exported Device Info:\n$shareData');
+        ShareParams shareParams = ShareParams(text: shareData, subject: name);
+        SharePlus.instance.share(shareParams);
+      },
+    );
+
+    return super.buildActions(context);
+  }
+
+  @override
   Widget buildTab(BuildContext context) {
     final mq = MediaQuery.of(context);
 
-    final info = {
+    info = {
       'Platform': Platform.operatingSystem,
       'OS Version': Platform.operatingSystemVersion,
       'Screen Size': '${mq.size.width} x ${mq.size.height}',
@@ -52,28 +73,7 @@ class DeviceInfoPlugin extends DevToolkitPlugin {
 
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            ElevatedButton.icon(
-              icon: const Icon(Icons.upload_file),
-              label: const Text('Export'),
-              onPressed: () {
-                String shareData = '';
-
-                for (var element in info.entries) {
-                  shareData += '${element.key} : ${element.value}\n';
-                }
-                FlutterDevToolkit.logger.log(
-                  '📤 Exported Device Info:\n$shareData',
-                );
-                ShareParams shareParams = ShareParams(
-                  text: shareData,
-                  subject: name,
-                );
-                SharePlus.instance.share(shareParams);
-              },
-            ),
-            const SizedBox(width: 12),
-          ],
+          children: [const SizedBox(width: 12)],
         ),
       ],
     );

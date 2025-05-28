@@ -1,10 +1,15 @@
 import 'package:flutter/widgets.dart';
+import '../core/logger_interface.dart';
 import '../flutter_dev_toolkit.dart';
 
 class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
   static final RouteInterceptor _instance = RouteInterceptor._();
+
   static final Map<String, DateTime> _entryTimestamps = {};
   static final List<String> _routeStack = [];
+  static final List<String> _routeHistory = [];
+  static final Map<String, dynamic> routeArguments = {};
+  static final ValueNotifier<int> routeVersion = ValueNotifier(0);
 
   RouteInterceptor._();
 
@@ -14,26 +19,35 @@ class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
     FlutterDevToolkit.logger.log('RouteInterceptor initialized');
   }
 
-  static final List<String> _routeHistory = [];
-
-  void _logHistory(String action, String routeName) {
-    _routeHistory.add(
-      '[$action] $routeName @ ${DateTime.now().toIso8601String()}',
-    );
-    if (_routeHistory.length > 1000) _routeHistory.removeAt(0);
-  }
+  static List<String> get routeStack => List.unmodifiable(_routeStack);
+  static List<String> get routeHistory => List.unmodifiable(_routeHistory);
+  static Map<String, DateTime> get entryTimestamps =>
+      Map.unmodifiable(_entryTimestamps);
 
   void _log(String action, Route<dynamic>? route) {
-    if (!FlutterDevToolkit.config.enableRouteInterceptor) return;
     final name = route?.settings.name ?? 'Unnamed';
     final args = route?.settings.arguments;
-    final argsStr = args != null ? ' | args: ${args.toString()}' : '';
 
-    FlutterDevToolkit.logger.log('$action → $name$argsStr');
-    _logHistory(action, name);
+    if (args != null) {
+      routeArguments[name] = args;
+    }
+
+    FlutterDevToolkit.logger.log(
+      '$action → $name${args != null ? ' | args: $args' : ''}',
+    );
+    routeVersion.value++;
+    _logHistory(action, name, args);
   }
 
-  static List<String> get routeHistory => List.unmodifiable(_routeHistory);
+  static void _logHistory(String action, String routeName, [Object? args]) {
+    final time = DateTime.now().toIso8601String();
+    final argStr = args != null ? ' | args: $args' : '';
+    _routeHistory.add('[$action] $routeName$argStr @ $time');
+
+    if (_routeHistory.length > 1000) {
+      _routeHistory.removeAt(0);
+    }
+  }
 
   void _trackEntry(PageRoute route) {
     final name = route.settings.name ?? 'Unnamed';
@@ -50,7 +64,7 @@ class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
       final duration = DateTime.now().difference(entryTime);
       FlutterDevToolkit.logger.log(
         'Exited $name after ${duration.inSeconds}s',
-        level: LogLevel.info,
+        level: LogLevel.debug,
       );
     }
   }
@@ -86,8 +100,12 @@ class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
 
-  /// Exposes current route stack
-  static List<String> get currentStack => List.unmodifiable(_routeStack);
-  static Map<String, DateTime> get entryTimestamps =>
-      Map.unmodifiable(_entryTimestamps);
+  static void clear() {
+    for (var element in _routeHistory) {
+      _entryTimestamps.remove(element);
+    }
+    _routeHistory.clear();
+    routeArguments.clear();
+    routeVersion.value++;
+  }
 }
