@@ -1,3 +1,11 @@
+## 1.3.2
+
+- Updated Changelog
+
+## 1.3.1
+
+- Updated Dependencies
+
 ## 1.3.0
 
 ### ✨ Features
