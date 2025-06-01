@@ -78,55 +78,97 @@ class _NetworkTabState extends State<NetworkTab> {
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color:
-                      log.isError ? Colors.red.shade100 : Colors.green.shade50,
+                      log.isError
+                          ? Colors.red.shade100
+                          : Colors.lightGreen.shade50,
                   border: Border.all(
                     color: log.isError ? Colors.red : Colors.green,
-                    width: 0.5,
+                    width: 1,
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${log.method} ${log.url}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                    Text(
-                      'Status: ${log.statusCode} | Time: ${log.duration.inMilliseconds}ms',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                    if (log.requestBody != null)
-                      Text('Request: ${log.requestBody}'),
+                  mainAxisAlignment: MainAxisAlignment.start,
 
+                  children: [
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        TextButton(
-                          child: const Text(
-                            'Details',
-                            style: TextStyle(color: Colors.deepPurple),
+                        Text(
+                          '${log.method}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                            fontSize: 18,
                           ),
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => NetworkLogDetailPage(log: log),
-                                settings: RouteSettings(arguments: log),
-                              ),
-                            );
-                          },
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        TextButton(
-                          child: const Text(
-                            'Replay',
-                            style: TextStyle(color: Colors.deepPurple),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                            children: [
+                              Text(
+                                '${log.url}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Status: ${log.statusCode} | Time: ${log.duration.inMilliseconds}ms',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
-                          onPressed: () => _replay(log),
                         ),
                       ],
+                    ),
+                    SizedBox(height: 4),
+                    Padding(
+                      padding: EdgeInsetsGeometry.all(4),
+                      // padding: const EdgeInsets.only(left: 4, right: 4),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          GestureDetector(
+                            child: Text(
+                              'Details',
+                              style: TextStyle(
+                                color: Colors.indigo,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder:
+                                      (_) => NetworkLogDetailPage(log: log),
+                                  settings: RouteSettings(arguments: log),
+                                ),
+                              );
+                            },
+                          ),
+                          GestureDetector(
+                            child: Text(
+                              'Replay',
+                              style: TextStyle(
+                                color: Colors.indigo,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            onTap: () => _replay(log),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

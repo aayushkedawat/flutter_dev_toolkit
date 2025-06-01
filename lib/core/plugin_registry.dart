@@ -14,7 +14,6 @@ class PluginRegistry {
     void tryAdd(BuiltInPluginType type, DevToolkitPlugin plugin) {
       if (!disabled.contains(type)) {
         FlutterDevToolkit.addBuiltInPlugin(plugin);
-        plugin.onInit();
       }
     }
 
@@ -22,6 +21,6 @@ class PluginRegistry {
     tryAdd(BuiltInPluginType.network, NetworkPlugin());
     tryAdd(BuiltInPluginType.routes, RoutePlugin());
     // tryAdd(BuiltInPluginType.actions, ActionsPlugin());
-    tryAdd(BuiltInPluginType.deviceInfo, DeviceInfoPlugin());
+    tryAdd(BuiltInPluginType.deviceInfo, UserDeviceInfoPlugin());
   }
 }

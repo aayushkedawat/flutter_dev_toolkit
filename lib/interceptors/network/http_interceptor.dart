@@ -24,10 +24,24 @@ class HttpInterceptor extends http.BaseClient {
     try {
       originalResponse = await _inner.send(request);
     } catch (e) {
+      stopwatch.stop(); // Ensure timer stops here too
+
+      final errorLog = NetworkLog(
+        method: method,
+        url: url,
+        duration: stopwatch.elapsed,
+        requestHeaders: request.headers,
+        requestBody: requestBody,
+        statusCode: -1, // Use -1 or a custom code to indicate failure
+        responseBody: 'Exception: $e',
+        isError: true,
+      );
+
       FlutterDevToolkit.logger.log(
         '[NETWORK] ❌ ERROR $method $url\n  Exception: $e',
         level: LogLevel.error,
       );
+      NetworkLogStore.add(errorLog);
       rethrow;
     } finally {
       stopwatch.stop();
@@ -47,10 +61,6 @@ class HttpInterceptor extends http.BaseClient {
       isError: originalResponse.statusCode >= 400,
     );
 
-    FlutterDevToolkit.logger.log(
-      log.toString(),
-      level: log.isError ? LogLevel.error : LogLevel.info,
-    );
     NetworkLogStore.add(log);
 
     return http.StreamedResponse(

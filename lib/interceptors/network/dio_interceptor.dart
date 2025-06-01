@@ -8,7 +8,7 @@ class DioNetworkInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
     options.extra['startTime'] = DateTime.now();
-    super.onRequest(options, handler);
+    return handler.next(options);
   }
 
   @override
@@ -18,12 +18,11 @@ class DioNetworkInterceptor extends Interceptor {
         startTime != null
             ? DateTime.now().difference(startTime)
             : Duration.zero;
-
     final log = NetworkLog(
       method: response.requestOptions.method,
       url: response.requestOptions.uri.toString(),
       duration: duration,
-      requestHeaders: response.requestOptions.headers as Map<String, String>?,
+      requestHeaders: response.requestOptions.headers,
       requestBody: response.requestOptions.data,
       statusCode: response.statusCode,
       responseBody: response.data,
@@ -31,7 +30,7 @@ class DioNetworkInterceptor extends Interceptor {
 
     FlutterDevToolkit.logger.log(log.toString());
     NetworkLogStore.add(log);
-    super.onResponse(response, handler);
+    return handler.next(response);
   }
 
   @override
@@ -46,7 +45,7 @@ class DioNetworkInterceptor extends Interceptor {
       method: err.requestOptions.method,
       url: err.requestOptions.uri.toString(),
       duration: duration,
-      requestHeaders: err.requestOptions.headers as Map<String, String>?,
+      requestHeaders: err.requestOptions.headers,
       requestBody: err.requestOptions.data,
       statusCode: err.response?.statusCode,
       responseBody: err.response?.data,
@@ -55,6 +54,6 @@ class DioNetworkInterceptor extends Interceptor {
 
     FlutterDevToolkit.logger.log(log.toString(), level: LogLevel.error);
     NetworkLogStore.add(log);
-    super.onError(err, handler);
+    return handler.next(err);
   }
 }

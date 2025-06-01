@@ -3,7 +3,7 @@ import 'dart:convert';
 class NetworkLog {
   final String method;
   final String url;
-  final Map<String, String>? requestHeaders;
+  final Map<String, dynamic>? requestHeaders;
   final Map<String, dynamic>? requestBody;
   final int? statusCode;
   final dynamic responseBody;

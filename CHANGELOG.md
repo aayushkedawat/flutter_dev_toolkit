@@ -1,3 +1,12 @@
+## 1.3.0
+
+### ✨ Features
+- Added more information in Device Info.
+
+### 🐛 Fixes
+- UI update of logs.
+- Dio Interceptor fixes.
+- Added more information in Device Info.
 ## 1.2.0
 
 ### ✨ Features

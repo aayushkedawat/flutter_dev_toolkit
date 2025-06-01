@@ -139,10 +139,13 @@ class _AppStateInspectorViewState extends State<AppStateInspectorView> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                entry.source,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+              Expanded(
+                child: Text(
+                  formatted,
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.copy),
@@ -156,10 +159,10 @@ class _AppStateInspectorViewState extends State<AppStateInspectorView> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            formatted,
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-          ),
+          // Text(
+          //   formatted,
+          //   style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+          // ),
         ],
       ),
     );

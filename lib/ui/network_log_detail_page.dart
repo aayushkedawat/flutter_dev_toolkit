@@ -13,7 +13,10 @@ class NetworkLogDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${log.method} ${log.url}'),
+        title: Text(
+          'API Call Details',
+          style: TextStyle(fontWeight: FontWeight.w500),
+        ),
         backgroundColor: log.isError ? Colors.red : Colors.green,
         actions: [
           IconButton(

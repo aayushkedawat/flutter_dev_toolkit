@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:flutter_dev_toolkit/core/share_utils.dart';
 
 import '../../core/dev_toolkit_plugin.dart';
@@ -28,24 +28,11 @@ class RoutePlugin extends DevToolkitPlugin {
         onPressed: () => _export(context),
       ),
       IconButton(
-        icon: const Icon(Icons.copy),
-        tooltip: 'Copy All',
-        onPressed: () => _copy(context),
-      ),
-      IconButton(
         icon: const Icon(Icons.delete),
         tooltip: 'Clear',
         onPressed: () => _clear(context),
       ),
     ];
-  }
-
-  void _copy(BuildContext context) {
-    final data = _generateText();
-    Clipboard.setData(ClipboardData(text: data));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Copied all route info')));
   }
 
   void _export(BuildContext context) {

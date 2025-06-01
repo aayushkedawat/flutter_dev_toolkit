@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dev_toolkit/built_in_plugins/widgets/log_tile_widget.dart';
 
 import '../../interceptors/route_interceptor.dart';
 
@@ -55,7 +56,7 @@ class _RoutePluginViewState extends State<RoutePluginView> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(height: 6),
-                  ...stack.map((route) {
+                  ...stack.reversed.map((route) {
                     final entered = RouteInterceptor.entryTimestamps[route];
                     final duration =
                         entered != null
@@ -63,45 +64,49 @@ class _RoutePluginViewState extends State<RoutePluginView> {
                             : null;
                     final args = RouteInterceptor.routeArguments[route];
 
-                    return ListTile(
-                      title: Text(route),
-                      subtitle: Text(
-                        'Time: ${duration ?? '?'}s | Args: ${args ?? 'None'}',
-                      ),
-                      onLongPress: () {
-                        Clipboard.setData(ClipboardData(text: route));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Copied: $route')),
-                        );
-                      },
+                    return Column(
+                      children: [
+                        LogTileWidget(
+                          prefix: Icon(Icons.route),
+                          subTitle:
+                              'Time: ${duration ?? '?'}s | Args: ${args ?? 'None'}',
+                          title: route,
+                          onTap: () {
+                            Clipboard.setData(ClipboardData(text: route));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Copied: $route')),
+                            );
+                          },
+                        ),
+                        Divider(),
+                      ],
                     );
                   }),
-                  const Divider(),
+                  // const Divider(),
                   const Text(
                     '📜 Route History',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   ...history.map((entry) {
-                    return GestureDetector(
-                      onLongPress: () {
-                        Clipboard.setData(ClipboardData(text: entry));
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Copied route history entry'),
+                    return Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        LogTileWidget(
+                          suffix: IconButton(
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: entry));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Copied: $entry')),
+                              );
+                            },
+                            icon: Icon(Icons.copy),
                           ),
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2),
-                        child: Text(
-                          entry,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
+                          //     'Time: ${duration ?? '?'}s | Args: ${args ?? 'None'}',
+                          title: entry,
                         ),
-                      ),
+                        Divider(),
+                      ],
                     );
                   }),
                   const SizedBox(height: 40),

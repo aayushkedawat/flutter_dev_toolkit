@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dev_toolkit/built_in_plugins/widgets/log_tile_widget.dart';
 import 'package:flutter_dev_toolkit/core/default_logger.dart';
+import 'package:intl/intl.dart';
 import '../../../core/logger_interface.dart';
 import '../../../flutter_dev_toolkit.dart';
 import '../../models/log_tag.dart';
@@ -76,7 +78,8 @@ class _LogsTabState extends State<LogsTab> {
               ),
             ),
             Expanded(
-              child: ListView.builder(
+              child: ListView.separated(
+                separatorBuilder: (context, index) => Divider(),
                 padding: const EdgeInsets.all(8),
                 itemCount: logs.length,
                 itemBuilder: (context, index) {
@@ -87,15 +90,13 @@ class _LogsTabState extends State<LogsTab> {
                     LogLevel.warning => Colors.orange,
                     LogLevel.error => Colors.red,
                   };
-
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(log.message, style: TextStyle(color: color)),
-                      ],
-                    ),
+                  return LogTileWidget(
+                    prefix: getIconData(log.level),
+                    subTitle: DateFormat(
+                      'dd/MM/yyyy hh:mm a',
+                    ).format(log.timestamp),
+                    title: log.message,
+                    titleColor: color,
                   );
                 },
               ),
@@ -104,5 +105,19 @@ class _LogsTabState extends State<LogsTab> {
         );
       },
     );
+  }
+
+  Widget getIconData(LogLevel logLevel) {
+    switch (logLevel) {
+      case LogLevel.debug:
+        return Icon(Icons.bug_report_outlined);
+      case LogLevel.info:
+        return Icon(Icons.info_outline, color: Colors.blue);
+
+      case LogLevel.warning:
+        return Icon(Icons.warning_amber_outlined, color: Colors.amber);
+      case LogLevel.error:
+        return Icon(Icons.error_outline, color: Colors.red);
+    }
   }
 }
