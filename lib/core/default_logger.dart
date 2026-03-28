@@ -5,9 +5,16 @@ import 'logger_interface.dart';
 import '../models/log_entry.dart';
 
 class DefaultLogger implements LoggerInterface {
-  DefaultLogger();
+  DefaultLogger({this.maxEntries = 2000});
+
+  final int maxEntries;
 
   static final ValueNotifier<int> logVersion = ValueNotifier(0);
+
+  /// Incremented each time an error-level entry is added. Never decremented,
+  /// so the FAB badge always reflects the total error count for the session.
+  static final ValueNotifier<int> errorCount = ValueNotifier(0);
+
   final List<LogEntry> _entries = [];
 
   @override
@@ -21,11 +28,11 @@ class DefaultLogger implements LoggerInterface {
   }) {
     final entry = LogEntry(message: message, level: level, tags: tags);
     _entries.add(entry);
-    if (_entries.length > 2000) _entries.removeAt(0);
+    if (_entries.length > maxEntries) _entries.removeAt(0);
     logVersion.value++;
+    if (level == LogLevel.error) errorCount.value++;
   }
 
-  @override
   @override
   void clear() {
     _entries.clear();
