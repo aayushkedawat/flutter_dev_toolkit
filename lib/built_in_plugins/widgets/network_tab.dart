@@ -73,6 +73,15 @@ class _NetworkTabState extends State<NetworkTab> {
             itemBuilder: (context, index) {
               final log = logs[index];
 
+              final ms = log.duration.inMilliseconds;
+              final speedColor = log.isError
+                  ? Colors.red
+                  : ms < 200
+                      ? Colors.green
+                      : ms < 1000
+                          ? Colors.orange
+                          : Colors.red;
+
               return Container(
                 margin: const EdgeInsets.symmetric(vertical: 4),
                 padding: const EdgeInsets.all(8),
@@ -90,12 +99,11 @@ class _NetworkTabState extends State<NetworkTab> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.start,
-
                   children: [
                     Row(
                       children: [
                         Text(
-                          '${log.method}',
+                          log.method,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
@@ -104,14 +112,13 @@ class _NetworkTabState extends State<NetworkTab> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(width: 8),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-
                             children: [
                               Text(
-                                '${log.url}',
+                                log.url,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.black,
@@ -119,28 +126,51 @@ class _NetworkTabState extends State<NetworkTab> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Status: ${log.statusCode} | Time: ${log.duration.inMilliseconds}ms',
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Text(
+                                    'Status: ${log.statusCode}',
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  // Response-time badge
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: speedColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      '${ms}ms',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    SizedBox(height: 4),
+                    const SizedBox(height: 4),
                     Padding(
-                      padding: EdgeInsetsGeometry.all(4),
-                      // padding: const EdgeInsets.only(left: 4, right: 4),
+                      padding: const EdgeInsets.all(4),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           GestureDetector(
-                            child: Text(
+                            child: const Text(
                               'Details',
                               style: TextStyle(
                                 color: Colors.indigo,
@@ -158,7 +188,7 @@ class _NetworkTabState extends State<NetworkTab> {
                             },
                           ),
                           GestureDetector(
-                            child: Text(
+                            child: const Text(
                               'Replay',
                               style: TextStyle(
                                 color: Colors.indigo,
