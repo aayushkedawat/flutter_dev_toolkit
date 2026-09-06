@@ -37,8 +37,6 @@ topics:
 screenshots:
   - path: screenshots/logs.png
     description: "Log console showing real-time filtered logs with colored severity levels."
-  - path: screenshots/actions.png
-    description: "Actions tab with options to export and clear logs and route data."
   - path: screenshots/bloc_inspector_details.png
     description: "Detailed view of a selected Bloc state change in the App State Inspector."
   - path: screenshots/bloc_inspector.png

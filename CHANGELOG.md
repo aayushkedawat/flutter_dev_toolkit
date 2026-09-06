@@ -1,3 +1,30 @@
+## 1.4.0
+
+### ✨ Features
+- **Crashes plugin** — captures Flutter framework errors (`FlutterError.onError`) and unhandled async errors (`PlatformDispatcher.onError`) with full stack traces, marking the latter as fatal.
+- **Performance plugin** — live FPS, resident memory (RSS), and jank-frame counters driven by `SchedulerBinding` frame callbacks and timings.
+- **Deep Links plugin** — records incoming deep links via `DevToolkitDeepLinkObserver`, with URI parsing, a query-parameter inspector, and JSON export.
+- **HAR 1.2 export** for captured network calls (`NetworkLog.toHarDocument`) — importable into Chrome DevTools, Postman, and Charles Proxy.
+- Response-time colour badges on network entries (green < 200 ms, orange < 1 s, red ≥ 1 s) and a "clear network logs" action.
+- Draggable floating action button, with a badge showing the session error count.
+- `DevToolkitConfig.enableInRelease` (default `false`) suppresses the overlay in release builds and installs a no-op logger so consumer `logger` calls stay safe in production.
+- `DevToolkitConfig.maxLogEntries` and `DevToolkitConfig.maxNetworkLogs` make retention limits configurable.
+
+### 🐛 Fixes
+- Fixed a compile error in `PerformanceTab`, which referenced an undefined `FrameTimingCallback` type. The package did not analyze or build before this fix.
+- Fixed an invalid override: the release-mode no-op logger declared `List<dynamic> get logEntries` where `LoggerInterface` requires `List<LogEntry>`.
+- `DevToolkitConfig.maxLogEntries` is now actually applied. It was previously read by nothing, so log retention was always the `DefaultLogger` default. A cap passed directly to `DefaultLogger(maxEntries:)` still wins.
+- `NetworkLog.toJson()` no longer throws a `TypeError` when the response body was already decoded. Dio hands back `Map`s and `List`s, which the JSON/HAR export path assumed were `String`s.
+- `DeviceInfoTab` no longer touches its `BuildContext` across an async gap without a `mounted` guard.
+- Removed an unused import in `log_overlay.dart`.
+
+### 📦 Housekeeping
+- Removed the deprecated Actions plugin and tab (fully commented out since 1.3.0) and its stale screenshot.
+- Enabled `flutter_lints`: `analysis_options.yaml` was empty, so the linter never ran. `flutter analyze` is now clean for both the package and the example app.
+- Added a unit test suite covering logger retention, store caps, config wiring, and JSON/HAR export. The test file was previously empty.
+- Added GitHub Actions CI running format, analyze, test, and `pub publish --dry-run` on pushes and pull requests.
+- The example app no longer replaces the toolkit's `FlutterError.onError` handler, which silently disabled crash capture; it now chains to the previous handler.
+
 ## 1.3.2
 
 - Updated Changelog

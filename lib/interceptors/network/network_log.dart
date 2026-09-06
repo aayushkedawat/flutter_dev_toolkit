@@ -80,9 +80,7 @@ class NetworkLog {
           'size': -1,
           'mimeType': 'application/json',
           'text':
-              responseBody is String
-                  ? responseBody
-                  : json.encode(responseBody),
+              responseBody is String ? responseBody : json.encode(responseBody),
         },
         'redirectURL': '',
         'headersSize': -1,
@@ -105,8 +103,11 @@ class NetworkLog {
     return const JsonEncoder.withIndent('  ').convert(har);
   }
 
-  dynamic _parseIfJson(String? input) {
-    if (input == null) return null;
+  /// Decodes [input] when it is a JSON string, and passes anything else
+  /// through untouched. Dio hands back already-decoded Maps and Lists, so this
+  /// must not assume a String.
+  dynamic _parseIfJson(dynamic input) {
+    if (input is! String) return input;
     try {
       return json.decode(input);
     } catch (_) {
@@ -117,13 +118,24 @@ class NetworkLog {
   String _statusText(int? code) {
     if (code == null) return '';
     const texts = {
-      200: 'OK', 201: 'Created', 204: 'No Content', 301: 'Moved Permanently',
-      302: 'Found', 304: 'Not Modified', 400: 'Bad Request',
-      401: 'Unauthorized', 403: 'Forbidden', 404: 'Not Found',
-      405: 'Method Not Allowed', 408: 'Request Timeout',
-      422: 'Unprocessable Entity', 429: 'Too Many Requests',
-      500: 'Internal Server Error', 502: 'Bad Gateway',
-      503: 'Service Unavailable', 504: 'Gateway Timeout',
+      200: 'OK',
+      201: 'Created',
+      204: 'No Content',
+      301: 'Moved Permanently',
+      302: 'Found',
+      304: 'Not Modified',
+      400: 'Bad Request',
+      401: 'Unauthorized',
+      403: 'Forbidden',
+      404: 'Not Found',
+      405: 'Method Not Allowed',
+      408: 'Request Timeout',
+      422: 'Unprocessable Entity',
+      429: 'Too Many Requests',
+      500: 'Internal Server Error',
+      502: 'Bad Gateway',
+      503: 'Service Unavailable',
+      504: 'Gateway Timeout',
     };
     return texts[code] ?? '';
   }

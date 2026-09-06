@@ -5,7 +5,7 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter_dev_toolkit/core/device_info_store.dart';
 
 class DeviceInfoTab extends StatefulWidget {
-  const DeviceInfoTab({Key? key}) : super(key: key);
+  const DeviceInfoTab({super.key});
   @override
   State<DeviceInfoTab> createState() => _DeviceInfoTabState();
 }
@@ -41,13 +41,17 @@ class _DeviceInfoTabState extends State<DeviceInfoTab> {
       info['OS Name'] = iosInfo.systemName;
       info['OS Version'] = iosInfo.systemVersion;
     }
+    // The awaits above mean this State may have been disposed by now; touching
+    // an inherited widget after that would throw.
+    if (!mounted) return;
+
     final mq = MediaQuery.of(context);
     info.addAll({
       'Platform': Platform.operatingSystem,
       'OS Version': Platform.operatingSystemVersion,
       'Screen Size':
           '${mq.size.width.toStringAsFixed(2)} x ${mq.size.height.toStringAsFixed(2)}',
-      'Pixel Ratio': '${mq.devicePixelRatio.toStringAsFixed(2)}',
+      'Pixel Ratio': mq.devicePixelRatio.toStringAsFixed(2),
       'Orientation': mq.orientation.name,
       'Locale': Localizations.localeOf(context).toLanguageTag(),
     });

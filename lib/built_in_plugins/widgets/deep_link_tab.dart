@@ -22,7 +22,7 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
       valueListenable: DeepLinkStore.version,
-      builder: (context, _, __) {
+      builder: (context, _, _) {
         final all = DeepLinkStore.entries.reversed.toList();
         final filtered =
             _search.isEmpty
@@ -39,11 +39,7 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.link_off,
-                  color: Colors.white24,
-                  size: 48,
-                ),
+                const Icon(Icons.link_off, color: Colors.white24, size: 48),
                 const SizedBox(height: 12),
                 const Text(
                   'No deep links recorded yet',
@@ -74,10 +70,11 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.search, color: Colors.black54),
                 ),
-                onChanged: (v) => setState(() {
-                  _search = v;
-                  _selected = null;
-                }),
+                onChanged:
+                    (v) => setState(() {
+                      _search = v;
+                      _selected = null;
+                    }),
               ),
             ),
             Expanded(
@@ -87,8 +84,9 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
                   SizedBox(
                     width: 260,
                     child: ListView.separated(
-                      separatorBuilder: (_, __) =>
-                          const Divider(height: 1, color: Colors.white12),
+                      separatorBuilder:
+                          (_, _) =>
+                              const Divider(height: 1, color: Colors.white12),
                       itemCount: filtered.length,
                       itemBuilder: (_, i) {
                         final entry = filtered[i];
@@ -173,17 +171,13 @@ class _DeepLinkDetail extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(
-                  Icons.copy,
-                  size: 16,
-                  color: Colors.white54,
-                ),
+                icon: const Icon(Icons.copy, size: 16, color: Colors.white54),
                 tooltip: 'Copy URI',
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: entry.uri));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('URI copied')),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(const SnackBar(content: Text('URI copied')));
                 },
               ),
             ],
@@ -227,21 +221,23 @@ class _DeepLinkDetail extends StatelessWidget {
               title: 'Query Parameters',
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: entry.queryParams.entries
-                    .map((e) => _kv(e.key, e.value))
-                    .toList(),
+                children:
+                    entry.queryParams.entries
+                        .map((e) => _kv(e.key, e.value))
+                        .toList(),
               ),
             ),
           ],
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () {
-              final text = const JsonEncoder.withIndent('  ')
-                  .convert(entry.toJson());
+              final text = const JsonEncoder.withIndent(
+                '  ',
+              ).convert(entry.toJson());
               Clipboard.setData(ClipboardData(text: text));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Copied as JSON')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('Copied as JSON')));
             },
             icon: const Icon(Icons.copy_all, size: 16),
             label: const Text('Copy as JSON'),

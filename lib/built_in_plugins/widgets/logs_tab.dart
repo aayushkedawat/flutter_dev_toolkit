@@ -22,7 +22,7 @@ class _LogsTabState extends State<LogsTab> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: DefaultLogger.logVersion,
-      builder: (context, _, __) {
+      builder: (context, _, _) {
         final logs =
             FlutterDevToolkit.logger.logEntries
                 .where((log) {

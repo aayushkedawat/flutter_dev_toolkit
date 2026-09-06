@@ -11,6 +11,8 @@ import 'core/network_log_store.dart';
 import 'core/plugin_registry.dart';
 import 'interceptors/interceptor_registry.dart';
 import 'models/crash_entry.dart';
+import 'models/log_entry.dart';
+import 'models/log_tag.dart';
 
 class FlutterDevToolkit with WidgetsBindingObserver {
   static late LoggerInterface logger;
@@ -50,6 +52,10 @@ class FlutterDevToolkit with WidgetsBindingObserver {
     logger = config.logger;
 
     // Apply store limits from config
+    final activeLogger = logger;
+    if (activeLogger is DefaultLogger) {
+      activeLogger.configure(maxEntries: config.maxLogEntries);
+    }
     NetworkLogStore.configure(maxLogs: config.maxNetworkLogs);
 
     logger.log('[DEBUG] Initializing FlutterDevToolkit...');
@@ -100,10 +106,7 @@ class FlutterDevToolkit with WidgetsBindingObserver {
         ),
       );
       if (logger is DefaultLogger) {
-        (logger as DefaultLogger).log(
-          '[FATAL] $error',
-          level: LogLevel.error,
-        );
+        (logger as DefaultLogger).log('[FATAL] $error', level: LogLevel.error);
       }
       return false; // let the error propagate normally
     };
@@ -145,9 +148,15 @@ class FlutterDevToolkit with WidgetsBindingObserver {
 /// Silent logger used when the toolkit is disabled in release mode.
 class _NoOpLogger implements LoggerInterface {
   @override
-  void log(String message, {LogLevel level = LogLevel.debug, Set tags = const {}}) {}
+  void log(
+    String message, {
+    LogLevel level = LogLevel.debug,
+    Set<LogTag> tags = const {},
+  }) {}
+
   @override
-  List get logEntries => const [];
+  List<LogEntry> get logEntries => const [];
+
   @override
   void clear() {}
 }

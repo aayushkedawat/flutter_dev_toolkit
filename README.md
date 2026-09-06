@@ -11,14 +11,19 @@ Track logs, API calls, navigation, lifecycle events, screen transitions, app sta
 
 ## ✨ Features
 
-- ✅ In-app Dev Console with floating overlay
+- ✅ In-app Dev Console with a draggable floating overlay
 - ✅ Colored logs with filtering and tagging
 - ✅ Network call inspector (supports `http`, `dio`, and `retrofit`)
 - ✅ Route stack and screen duration tracker
+- ✅ Crash reporter — Flutter and unhandled async errors with stack traces
+- ✅ Performance monitor — FPS, memory (RSS) and jank frames
+- ✅ Deep link inspector with query parameter breakdown
 - ✅ Lifecycle event logging
-- ✅ Export logs, network calls, and route data
+- ✅ Device info panel
+- ✅ Export logs, network calls (JSON, cURL, HAR 1.2) and route data
 - ✅ Plugin system for adding custom tools
 - ✅ App State Inspector (Bloc support)
+- ✅ Suppressed in release builds by default
 
 ---
 
@@ -48,11 +53,17 @@ void main() {
   FlutterDevToolkit.init(
     config: DevToolkitConfig(
       logger: DefaultLogger(),
+
+      // All built-in plugins are enabled by default. List the ones you want
+      // to leave out:
       disableBuiltInPlugins: [
         // BuiltInPluginType.logs,
         // BuiltInPluginType.network,
         // BuiltInPluginType.routes,
         // BuiltInPluginType.deviceInfo,
+        // BuiltInPluginType.crashes,
+        // BuiltInPluginType.performance,
+        // BuiltInPluginType.deepLinks,
       ],
     ),
   );
@@ -60,6 +71,36 @@ void main() {
   runApp(MyApp());
 }
 ```
+
+`init()` installs `FlutterError.onError` and `PlatformDispatcher.onError`
+handlers so the Crashes tab can record errors. If you install your own handler
+afterwards, chain to the previous one — replacing it outright silently stops
+crash capture:
+
+```dart
+final previousOnError = FlutterError.onError;
+FlutterError.onError = (details) {
+  myCrashReporter.record(details);
+  previousOnError?.call(details);
+};
+```
+
+### Configuration options
+
+| Option | Default | Purpose |
+|--------|---------|---------|
+| `logger` | — | The `LoggerInterface` backing the Logs tab |
+| `disableBuiltInPlugins` | `[]` | Built-in plugins to leave out |
+| `enableInRelease` | `false` | Whether the overlay is active in release builds |
+| `maxLogEntries` | `2000` | Log entries retained in memory |
+| `maxNetworkLogs` | `500` | Network calls retained in memory |
+
+### Release builds
+
+The toolkit is suppressed in release builds unless you opt in with
+`enableInRelease: true`. When suppressed, `DevOverlay` renders nothing and
+`FlutterDevToolkit.logger` becomes a no-op, so your logging calls stay safe in
+production.
 
 ### 2. Add Dev Console Overlay
 
@@ -137,6 +178,33 @@ FlutterDevToolkit.registerPlugin(CounterPlugin());
 
 ---
 
+## 🔗 Deep Links
+
+Deep link capture is routing-agnostic — call the observer wherever your app
+receives a link:
+
+```dart
+// uni_links
+uriLinkStream.listen((uri) {
+  if (uri != null) {
+    DevToolkitDeepLinkObserver.onLinkReceived(uri.toString());
+  }
+});
+
+// go_router
+GoRouter(
+  redirect: (context, state) {
+    DevToolkitDeepLinkObserver.onLinkReceived(
+      state.uri.toString(),
+      source: 'go_router',
+    );
+    return null;
+  },
+);
+```
+
+---
+
 ## 🔍 App State Inspector
 
 Inspect state transitions (Bloc only for now).
@@ -167,8 +235,11 @@ FlutterDevToolkit.logger.log('Error occurred', level: LogLevel.error);
 You can export relevant data directly from each plugin’s tab:
 
 - Logs Plugin → Export filtered logs
-- Network Plugin → Export captured network calls
+- Network Plugin → Export captured network calls as JSON, or as a HAR 1.2
+  archive you can open in Chrome DevTools, Postman or Charles Proxy
 - Route Tracker → Export route stack and navigation history
+- Crashes → Export captured errors with stack traces
+- Deep Links → Export recorded links as JSON
 
 ---
 

@@ -21,7 +21,7 @@ class _PerformanceTabState extends State<PerformanceTab> {
   int _memoryMb = 0;
 
   late final void Function(Duration) _frameCallback;
-  late final FrameTimingCallback _timingCallback;
+  late final void Function(List<FrameTiming>) _timingCallback;
 
   @override
   void initState() {
@@ -94,7 +94,7 @@ class _PerformanceTabState extends State<PerformanceTab> {
         const SizedBox(height: 12),
         _MetricCard(
           label: 'Memory',
-          value: _memoryMb > 0 ? '${_memoryMb} MB' : 'N/A',
+          value: _memoryMb > 0 ? '$_memoryMb MB' : 'N/A',
           icon: Icons.memory,
           color: _memColor(_memoryMb),
           subtitle: 'Current resident set size (RSS)',
@@ -105,8 +105,7 @@ class _PerformanceTabState extends State<PerformanceTab> {
           value: '$_jankFrames / $_totalFrames',
           icon: Icons.warning_amber_outlined,
           color: _jankFrames == 0 ? Colors.green : Colors.orange,
-          subtitle:
-              '${jankPct.toStringAsFixed(1)}% of frames exceeded 16 ms',
+          subtitle: '${jankPct.toStringAsFixed(1)}% of frames exceeded 16 ms',
         ),
         const SizedBox(height: 24),
         const Text(
@@ -191,10 +190,7 @@ class _MetricCard extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: Colors.white38,
-                    fontSize: 11,
-                  ),
+                  style: const TextStyle(color: Colors.white38, fontSize: 11),
                 ),
               ],
             ),

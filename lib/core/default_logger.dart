@@ -5,9 +5,29 @@ import 'logger_interface.dart';
 import '../models/log_entry.dart';
 
 class DefaultLogger implements LoggerInterface {
-  DefaultLogger({this.maxEntries = 2000});
+  /// [maxEntries] caps how many entries are retained in memory. When it is
+  /// omitted the cap is taken from [DevToolkitConfig.maxLogEntries] at
+  /// [FlutterDevToolkit.init] time; passing it explicitly always wins.
+  DefaultLogger({int? maxEntries})
+    : _explicitMaxEntries = maxEntries,
+      _maxEntries = maxEntries ?? defaultMaxEntries;
 
-  final int maxEntries;
+  /// Retention cap used when neither the constructor nor the config sets one.
+  static const int defaultMaxEntries = 2000;
+
+  final int? _explicitMaxEntries;
+  int _maxEntries;
+
+  int get maxEntries => _maxEntries;
+
+  /// Called by [FlutterDevToolkit.init] to apply
+  /// [DevToolkitConfig.maxLogEntries]. A cap passed to the constructor takes
+  /// precedence, so a consumer who configured the logger directly keeps it.
+  void configure({required int maxEntries}) {
+    if (_explicitMaxEntries != null) return;
+    _maxEntries = maxEntries;
+    _trim();
+  }
 
   static final ValueNotifier<int> logVersion = ValueNotifier(0);
 
@@ -28,7 +48,7 @@ class DefaultLogger implements LoggerInterface {
   }) {
     final entry = LogEntry(message: message, level: level, tags: tags);
     _entries.add(entry);
-    if (_entries.length > maxEntries) _entries.removeAt(0);
+    _trim();
     logVersion.value++;
     if (level == LogLevel.error) errorCount.value++;
   }
@@ -37,5 +57,11 @@ class DefaultLogger implements LoggerInterface {
   void clear() {
     _entries.clear();
     logVersion.value++;
+  }
+
+  void _trim() {
+    while (_entries.length > _maxEntries) {
+      _entries.removeAt(0);
+    }
   }
 }

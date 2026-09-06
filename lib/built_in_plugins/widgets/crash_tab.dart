@@ -21,7 +21,7 @@ class _CrashTabState extends State<CrashTab> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
       valueListenable: CrashLogStore.version,
-      builder: (context, _, __) {
+      builder: (context, _, _) {
         final entries = CrashLogStore.entries.reversed.toList();
 
         if (entries.isEmpty) {
@@ -46,8 +46,8 @@ class _CrashTabState extends State<CrashTab> {
             SizedBox(
               width: 260,
               child: ListView.separated(
-                separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: Colors.white12),
+                separatorBuilder:
+                    (_, _) => const Divider(height: 1, color: Colors.white12),
                 itemCount: entries.length,
                 itemBuilder: (_, index) {
                   final entry = entries[index];
@@ -65,10 +65,7 @@ class _CrashTabState extends State<CrashTab> {
                       entry.message,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                      ),
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
                     ),
                     subtitle: Text(
                       DateFormat('dd/MM/yy HH:mm:ss').format(entry.timestamp),
@@ -144,8 +141,9 @@ class _CrashDetail extends StatelessWidget {
                 icon: const Icon(Icons.copy, size: 16, color: Colors.white70),
                 tooltip: 'Copy to clipboard',
                 onPressed: () {
-                  final text = const JsonEncoder.withIndent('  ')
-                      .convert(entry.toJson());
+                  final text = const JsonEncoder.withIndent(
+                    '  ',
+                  ).convert(entry.toJson());
                   Clipboard.setData(ClipboardData(text: text));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Copied to clipboard')),

@@ -32,7 +32,7 @@ class _DevConsoleState extends State<DevConsole> {
             builder: (context) {
               return ValueListenableBuilder<DevToolkitPlugin?>(
                 valueListenable: FlutterDevToolkit.activePluginNotifier,
-                builder: (_, plugin, __) {
+                builder: (_, plugin, _) {
                   return Scaffold(
                     backgroundColor: Colors.black,
                     appBar: AppBar(
