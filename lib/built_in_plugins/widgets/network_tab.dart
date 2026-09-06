@@ -74,13 +74,14 @@ class _NetworkTabState extends State<NetworkTab> {
               final log = logs[index];
 
               final ms = log.duration.inMilliseconds;
-              final speedColor = log.isError
-                  ? Colors.red
-                  : ms < 200
+              final speedColor =
+                  log.isError
+                      ? Colors.red
+                      : ms < 200
                       ? Colors.green
                       : ms < 1000
-                          ? Colors.orange
-                          : Colors.red;
+                      ? Colors.orange
+                      : Colors.red;
 
               return Container(
                 margin: const EdgeInsets.symmetric(vertical: 4),

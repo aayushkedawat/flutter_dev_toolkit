@@ -1,1 +1,9 @@
-enum BuiltInPluginType { logs, network, routes, deviceInfo, crashes, performance, deepLinks }
+enum BuiltInPluginType {
+  logs,
+  network,
+  routes,
+  deviceInfo,
+  crashes,
+  performance,
+  deepLinks,
+}

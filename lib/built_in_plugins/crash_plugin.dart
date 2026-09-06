@@ -33,8 +33,9 @@ class CrashPlugin extends DevToolkitPlugin {
             );
             return;
           }
-          final text = const JsonEncoder.withIndent('  ')
-              .convert(entries.map((e) => e.toJson()).toList());
+          final text = const JsonEncoder.withIndent(
+            '  ',
+          ).convert(entries.map((e) => e.toJson()).toList());
           ExportUtil.exportData(text: text, title: 'Crash Logs');
         },
       ),
