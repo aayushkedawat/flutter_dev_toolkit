@@ -17,6 +17,12 @@
 - `NetworkLog.toJson()` no longer throws a `TypeError` when the response body was already decoded. Dio hands back `Map`s and `List`s, which the JSON/HAR export path assumed were `String`s.
 - `DeviceInfoTab` no longer touches its `BuildContext` across an async gap without a `mounted` guard.
 - Removed an unused import in `log_overlay.dart`.
+- **App State Inspector now updates live.** The tab had no listener on the Bloc observer, so it only refreshed when rebuilt for some other reason — state changes appeared to stop arriving. `AppStateAdapter` gained a `revision` `Listenable` that the inspector rebuilds on.
+- **The Bloc inspector now shows the previous state.** `DevBlocObserver` discarded `change.currentState`, so every entry recorded only the new state despite the UI being presented as a transition view.
+- `DevBlocObserver` retained transitions without any limit — the only unbounded store in the toolkit. It is now capped at 500 entries and exposes `clear()`.
+- The inspector's selected entry was tracked by list index into a newest-first list, so incoming state changes silently moved the selection to a different entry. It is now tracked by identity.
+- Fixed route stack corruption when the same route appears on the stack twice (A → B → A): exit tracking removed the *first* matching entry, leaving the stack reordered as `[B, A]` and discarding the still-open route's entry time. Durations under a second now report in milliseconds instead of `0s`.
+- The "clear route info" dialog promised to clear the stack, which it never did (and should not — those screens are still open). The copy now matches the behaviour.
 
 ### 📦 Housekeeping
 - Removed the deprecated Actions plugin and tab (fully commented out since 1.3.0) and its stale screenshot.
@@ -24,6 +30,7 @@
 - Added a unit test suite covering logger retention, store caps, config wiring, and JSON/HAR export. The test file was previously empty.
 - Added GitHub Actions CI running format, analyze, test, and `pub publish --dry-run` on pushes and pull requests.
 - The example app no longer replaces the toolkit's `FlutterError.onError` handler, which silently disabled crash capture; it now chains to the previous handler.
+- The example app now has triggers for every tab — logging at each level, a successful and a failing request, a reported Flutter error, an unhandled async error, a jank burst, and a simulated deep link — so the 1.4.0 panels can actually be exercised.
 
 ## 1.3.2
 

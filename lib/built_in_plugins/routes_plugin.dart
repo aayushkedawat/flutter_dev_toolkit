@@ -47,7 +47,10 @@ class RoutePlugin extends DevToolkitPlugin {
       builder:
           (_) => AlertDialog(
             title: const Text('Clear Route Info?'),
-            content: const Text('This will clear history and stack.'),
+            content: const Text(
+              'This will clear the navigation history. The current route '
+              'stack stays, since those screens are still open.',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),

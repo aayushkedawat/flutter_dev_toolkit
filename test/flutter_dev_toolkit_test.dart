@@ -1,6 +1,8 @@
 import 'dart:convert';
 
+import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_dev_toolkit/core/crash_log_store.dart';
@@ -10,7 +12,10 @@ import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/core/network_log_store.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/network_log.dart';
+import 'package:flutter_dev_toolkit/interceptors/route_interceptor.dart';
 import 'package:flutter_dev_toolkit/models/built_in_plugin_type.dart';
+import 'package:flutter_dev_toolkit/plugins/adapters/bloc_adapter.dart';
+import 'package:flutter_dev_toolkit/plugins/state_inspector/bloc_state_tracker.dart';
 import 'package:flutter_dev_toolkit/models/crash_entry.dart';
 import 'package:flutter_dev_toolkit/models/log_entry.dart';
 import 'package:flutter_dev_toolkit/models/log_tag.dart';
@@ -400,7 +405,161 @@ void main() {
       expect(entry.timestamp, isNotNull);
     });
   });
+
+  group('DevBlocObserver', () {
+    setUp(DevBlocObserver.clear);
+    tearDown(DevBlocObserver.clear);
+
+    test('records the previous state alongside the new one', () {
+      final observer = DevBlocObserver();
+      final cubit = _CounterCubit();
+      addTearDown(cubit.close);
+
+      observer.onChange(cubit, const Change(currentState: 0, nextState: 1));
+
+      final entry = DevBlocObserver.entries.single;
+      expect(entry.blocType, '_CounterCubit');
+      expect(entry.currentState, 1);
+      expect(entry.previousState, 0);
+    });
+
+    test('surfaces the transition through BlocAdapter', () {
+      final observer = DevBlocObserver();
+      final cubit = _CounterCubit();
+      addTearDown(cubit.close);
+
+      observer.onChange(cubit, const Change(currentState: 1, nextState: 2));
+
+      final entry = BlocAdapter().entries.single;
+      expect(entry.source, '_CounterCubit');
+      expect(entry.value, 2);
+      expect(entry.previousState, 1);
+    });
+
+    test('caps retained transitions and drops the oldest', () {
+      final observer = DevBlocObserver();
+      final cubit = _CounterCubit();
+      addTearDown(cubit.close);
+
+      for (var i = 0; i < DevBlocObserver.maxEntries + 5; i++) {
+        observer.onChange(cubit, Change(currentState: i, nextState: i + 1));
+      }
+
+      expect(DevBlocObserver.entries.length, DevBlocObserver.maxEntries);
+      expect(DevBlocObserver.entries.first.currentState, 6);
+    });
+
+    test('bumps version so the inspector can rebuild live', () {
+      final observer = DevBlocObserver();
+      final cubit = _CounterCubit();
+      addTearDown(cubit.close);
+      final before = DevBlocObserver.version.value;
+
+      observer.onChange(cubit, const Change(currentState: 0, nextState: 1));
+
+      expect(DevBlocObserver.version.value, greaterThan(before));
+      expect(BlocAdapter().revision, isNotNull);
+    });
+
+    test('clear() empties the buffer', () {
+      final observer = DevBlocObserver();
+      final cubit = _CounterCubit();
+      addTearDown(cubit.close);
+      observer.onChange(cubit, const Change(currentState: 0, nextState: 1));
+
+      DevBlocObserver.clear();
+
+      expect(DevBlocObserver.entries, isEmpty);
+    });
+
+    test('entries is an unmodifiable view', () {
+      expect(
+        () => DevBlocObserver.entries.add(BlocStateEntry('X', 1)),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
+  group('RouteInterceptor.clear', () {
+    late RouteInterceptor observer;
+
+    setUp(() {
+      FlutterDevToolkit.init(
+        config: DevToolkitConfig(
+          logger: DefaultLogger(),
+          disableBuiltInPlugins: BuiltInPluginType.values,
+        ),
+      );
+      observer = RouteInterceptor.instance as RouteInterceptor;
+    });
+
+    test('drops history but keeps routes that are still on the stack', () {
+      final a = _route('/a');
+      final b = _route('/b');
+      observer.didPush(a, null);
+      observer.didPush(b, a);
+      addTearDown(() {
+        observer.didPop(b, a);
+        observer.didPop(a, null);
+        RouteInterceptor.clear();
+      });
+
+      expect(RouteInterceptor.routeHistory, isNotEmpty);
+
+      RouteInterceptor.clear();
+
+      expect(RouteInterceptor.routeHistory, isEmpty);
+      // Both screens are still open, so the stack and their entry timestamps
+      // must survive for duration tracking to stay correct.
+      expect(RouteInterceptor.routeStack, ['/a', '/b']);
+      expect(RouteInterceptor.entryTimestamps.keys, containsAll(['/a', '/b']));
+    });
+
+    test('does not leak timestamps for routes that were popped', () {
+      final a = _route('/gone');
+      observer.didPush(a, null);
+      observer.didPop(a, null);
+
+      RouteInterceptor.clear();
+
+      expect(RouteInterceptor.entryTimestamps, isNot(contains('/gone')));
+      expect(RouteInterceptor.routeStack, isNot(contains('/gone')));
+    });
+
+    test('keeps the stack ordered when a route is pushed twice', () {
+      // A → B → A. Popping the second A must leave [/a, /b], not [/b, /a].
+      final a1 = _route('/a');
+      final b = _route('/b');
+      final a2 = _route('/a');
+      observer.didPush(a1, null);
+      observer.didPush(b, a1);
+      observer.didPush(a2, b);
+      addTearDown(() {
+        for (final r in [a2, b, a1]) {
+          observer.didPop(r, null);
+        }
+        RouteInterceptor.clear();
+      });
+
+      expect(RouteInterceptor.routeStack, ['/a', '/b', '/a']);
+
+      observer.didPop(a2, b);
+
+      expect(RouteInterceptor.routeStack, ['/a', '/b']);
+      // The first /a is still open, so its entry time must survive.
+      expect(RouteInterceptor.entryTimestamps, contains('/a'));
+    });
+  });
 }
+
+class _CounterCubit extends Cubit<int> {
+  _CounterCubit() : super(0);
+}
+
+PageRoute<void> _route(String name) => MaterialPageRoute<void>(
+  builder: (_) => const SizedBox.shrink(),
+  settings: RouteSettings(name: name),
+);
 
 NetworkLog _log({
   String method = 'GET',

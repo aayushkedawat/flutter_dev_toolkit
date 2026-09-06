@@ -37,18 +37,17 @@ class AppStateInspectorView extends StatefulWidget {
 
 class _AppStateInspectorViewState extends State<AppStateInspectorView> {
   int _selectedAdapterIndex = 0;
-  int? selectedEntryIndex;
+
+  /// Held by identity rather than by index: entries are displayed newest-first,
+  /// so an index would silently point at a different entry as state flows in.
+  AppStateEntry? _selectedEntry;
 
   @override
   Widget build(BuildContext context) {
     final adapter = widget.adapters[_selectedAdapterIndex];
-    final entries = adapter.entries.reversed.toList();
+    final revision = adapter.revision;
 
-    if (entries.isEmpty) {
-      return Center(child: Text('No ${adapter.name} state changes yet.'));
-    }
-
-    final isWide = MediaQuery.of(context).size.width > 600;
+    final body = Builder(builder: (context) => _buildBody(adapter));
 
     return Column(
       children: [
@@ -59,7 +58,7 @@ class _AppStateInspectorViewState extends State<AppStateInspectorView> {
             onChanged:
                 (val) => setState(() {
                   _selectedAdapterIndex = val!;
-                  selectedEntryIndex = null;
+                  _selectedEntry = null;
                 }),
             items: List.generate(widget.adapters.length, (i) {
               return DropdownMenuItem(
@@ -71,59 +70,71 @@ class _AppStateInspectorViewState extends State<AppStateInspectorView> {
         ),
         const Divider(height: 0),
         Expanded(
+          // Rebuild as new state arrives, when the adapter can tell us.
           child:
-              isWide
-                  ? Row(
-                    children: [
-                      Flexible(
-                        flex: 2,
-                        child: ListView.builder(
-                          itemCount: entries.length,
-                          itemBuilder: (_, i) {
-                            final entry = entries[i];
-                            return ListTile(
-                              selected: selectedEntryIndex == i,
-                              onTap:
-                                  () => setState(() => selectedEntryIndex = i),
-                              title: Text(entry.source),
-                              subtitle: Text(
-                                entry.timestamp
-                                    .toIso8601String()
-                                    .split('T')
-                                    .last,
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const VerticalDivider(width: 1),
-                      Flexible(
-                        flex: 3,
-                        child:
-                            selectedEntryIndex == null
-                                ? const Center(child: Text('Select an entry'))
-                                : _buildEntryDetail(
-                                  entries[selectedEntryIndex!],
-                                ),
-                      ),
-                    ],
-                  )
-                  : ListView.builder(
-                    itemCount: entries.length,
-                    itemBuilder:
-                        (_, i) => ExpansionTile(
-                          title: Text(entries[i].source),
-                          subtitle: Text(
-                            entries[i].timestamp
-                                .toIso8601String()
-                                .split('T')
-                                .last,
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                          children: [_buildEntryDetail(entries[i])],
-                        ),
+              revision == null
+                  ? body
+                  : ListenableBuilder(
+                    listenable: revision,
+                    builder: (_, _) => body,
                   ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBody(AppStateAdapter adapter) {
+    final entries = adapter.entries.reversed.toList();
+
+    if (entries.isEmpty) {
+      return Center(child: Text('No ${adapter.name} state changes yet.'));
+    }
+
+    final isWide = MediaQuery.of(context).size.width > 600;
+    if (!isWide) {
+      return ListView.builder(
+        itemCount: entries.length,
+        itemBuilder:
+            (_, i) => ExpansionTile(
+              title: Text(entries[i].source),
+              subtitle: Text(
+                _formatTime(entries[i].timestamp),
+                style: const TextStyle(fontSize: 12),
+              ),
+              children: [_buildEntryDetail(entries[i])],
+            ),
+      );
+    }
+
+    final selected = entries.contains(_selectedEntry) ? _selectedEntry : null;
+
+    return Row(
+      children: [
+        Flexible(
+          flex: 2,
+          child: ListView.builder(
+            itemCount: entries.length,
+            itemBuilder: (_, i) {
+              final entry = entries[i];
+              return ListTile(
+                selected: identical(selected, entry),
+                onTap: () => setState(() => _selectedEntry = entry),
+                title: Text(entry.source),
+                subtitle: Text(
+                  _formatTime(entry.timestamp),
+                  style: const TextStyle(fontSize: 12),
+                ),
+              );
+            },
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        Flexible(
+          flex: 3,
+          child:
+              selected == null
+                  ? const Center(child: Text('Select an entry'))
+                  : _buildEntryDetail(selected),
         ),
       ],
     );
@@ -131,9 +142,10 @@ class _AppStateInspectorViewState extends State<AppStateInspectorView> {
 
   Widget _buildEntryDetail(AppStateEntry entry) {
     final formatted = _prettyJson(entry.value);
-    return Container(
+    final previous = entry.previousState;
+
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
-      width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -141,14 +153,13 @@ class _AppStateInspectorViewState extends State<AppStateInspectorView> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  formatted,
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
+              const Text(
+                'Current state',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
               ),
               IconButton(
                 icon: const Icon(Icons.copy),
+                tooltip: 'Copy state',
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: formatted));
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -158,15 +169,32 @@ class _AppStateInspectorViewState extends State<AppStateInspectorView> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          // Text(
-          //   formatted,
-          //   style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-          // ),
+          SelectableText(
+            formatted,
+            style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+          ),
+          if (previous != null) ...[
+            const SizedBox(height: 16),
+            const Text(
+              'Previous state',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+            ),
+            SelectableText(
+              _prettyJson(previous),
+              style: const TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 13,
+                color: Colors.grey,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+
+  String _formatTime(DateTime timestamp) =>
+      timestamp.toIso8601String().split('T').last;
 
   String _prettyJson(dynamic value) {
     try {
