@@ -1,10 +1,13 @@
 import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_dev_toolkit/core/crash_log_store.dart';
@@ -19,6 +22,10 @@ import 'package:flutter_dev_toolkit/core/storage_inspector_store.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/network_log.dart';
 import 'package:flutter_dev_toolkit/interceptors/performance/frame_drop_detector.dart';
+import 'package:flutter_dev_toolkit/interceptors/network/dio_interceptor.dart';
+import 'package:flutter_dev_toolkit/interceptors/network/http_interceptor.dart';
+import 'package:flutter_dev_toolkit/interceptors/network/network_mock_rule.dart';
+import 'package:flutter_dev_toolkit/interceptors/network/network_mock_store.dart';
 import 'package:flutter_dev_toolkit/interceptors/performance/memory_probe.dart';
 import 'package:flutter_dev_toolkit/interceptors/performance/performance_history.dart';
 import 'package:flutter_dev_toolkit/interceptors/route_interceptor.dart';
@@ -614,6 +621,227 @@ void main() {
     });
   });
 
+  group('NetworkMockRule', () {
+    test('matches a URL containing the substring, case-insensitively', () {
+      final rule = NetworkMockRule(urlContains: '/Users');
+
+      expect(rule.matches('GET', 'https://api.test/Users/1'), isTrue);
+      expect(rule.matches('GET', 'https://api.test/users/1'), isTrue);
+      expect(rule.matches('GET', 'https://api.test/posts/1'), isFalse);
+    });
+
+    test('narrows to a method when one is set', () {
+      final rule = NetworkMockRule(urlContains: '/users', method: 'POST');
+
+      expect(rule.matches('POST', 'https://api.test/users'), isTrue);
+      expect(rule.matches('post', 'https://api.test/users'), isTrue);
+      expect(rule.matches('GET', 'https://api.test/users'), isFalse);
+    });
+
+    test('a disabled rule never matches', () {
+      final rule = NetworkMockRule(urlContains: '/users', enabled: false);
+
+      expect(rule.matches('GET', 'https://api.test/users'), isFalse);
+    });
+
+    test('an empty urlContains never matches', () {
+      final rule = NetworkMockRule(urlContains: '');
+
+      expect(rule.matches('GET', 'https://api.test/anything'), isFalse);
+    });
+
+    test('copyWith can explicitly clear the method back to any', () {
+      final rule = NetworkMockRule(urlContains: '/users', method: 'POST');
+
+      final cleared = rule.copyWith(method: null);
+
+      expect(cleared.method, isNull);
+      expect(cleared.matches('GET', 'https://api.test/users'), isTrue);
+    });
+
+    test('copyWith leaves the method alone when not passed', () {
+      final rule = NetworkMockRule(urlContains: '/users', method: 'POST');
+
+      final updated = rule.copyWith(statusCode: 500);
+
+      expect(updated.method, 'POST');
+      expect(updated.statusCode, 500);
+    });
+  });
+
+  group('NetworkMockStore', () {
+    setUp(NetworkMockStore.clear);
+    tearDown(NetworkMockStore.clear);
+
+    test('match() returns the first enabled rule that matches', () {
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/users'));
+      NetworkMockStore.add(
+        NetworkMockRule(urlContains: '/users', statusCode: 500),
+      );
+
+      final match = NetworkMockStore.match('GET', 'https://api.test/users');
+
+      expect(match?.statusCode, 200); // the first rule, not the second
+    });
+
+    test('match() returns null when nothing matches', () {
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/users'));
+
+      expect(NetworkMockStore.match('GET', 'https://api.test/posts'), isNull);
+    });
+
+    test('updateAt replaces a rule in place', () {
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/users'));
+
+      NetworkMockStore.updateAt(
+        0,
+        NetworkMockRule(urlContains: '/users', statusCode: 503),
+      );
+
+      expect(NetworkMockStore.rules.single.statusCode, 503);
+    });
+
+    test('removeAt deletes a rule', () {
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/a'));
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/b'));
+
+      NetworkMockStore.removeAt(0);
+
+      expect(NetworkMockStore.rules.single.urlContains, '/b');
+    });
+
+    test('bumps version on every mutation', () {
+      final before = NetworkMockStore.version.value;
+
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/users'));
+      expect(NetworkMockStore.version.value, greaterThan(before));
+    });
+
+    test('rules is an unmodifiable view', () {
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/users'));
+
+      expect(
+        () => NetworkMockStore.rules.add(NetworkMockRule(urlContains: '/x')),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
+  group('HttpInterceptor mocking', () {
+    setUp(NetworkMockStore.clear);
+    tearDown(() {
+      NetworkMockStore.clear();
+      NetworkLogStore.clear();
+    });
+
+    test('a matching rule short-circuits the request entirely', () async {
+      var realClientCalled = false;
+      final realClient = MockClient((request) async {
+        realClientCalled = true;
+        return http.Response('real response', 200);
+      });
+
+      NetworkMockStore.add(
+        NetworkMockRule(
+          urlContains: '/users',
+          statusCode: 201,
+          responseBody: '{"mocked":true}',
+        ),
+      );
+
+      final interceptor = HttpInterceptor(realClient);
+      final response = await interceptor.get(
+        Uri.parse('https://api.test/users'),
+      );
+
+      expect(realClientCalled, isFalse);
+      expect(response.statusCode, 201);
+      expect(response.body, '{"mocked":true}');
+      expect(NetworkLogStore.logs.single.isMocked, isTrue);
+    });
+
+    test('a non-matching request reaches the real client as normal', () async {
+      var realClientCalled = false;
+      final realClient = MockClient((request) async {
+        realClientCalled = true;
+        return http.Response('real response', 200);
+      });
+
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/other'));
+
+      final interceptor = HttpInterceptor(realClient);
+      final response = await interceptor.get(
+        Uri.parse('https://api.test/users'),
+      );
+
+      expect(realClientCalled, isTrue);
+      expect(response.body, 'real response');
+      expect(NetworkLogStore.logs.single.isMocked, isFalse);
+    });
+  });
+
+  group('DioNetworkInterceptor mocking', () {
+    setUp(() {
+      NetworkMockStore.clear();
+      // DioNetworkInterceptor.onResponse touches FlutterDevToolkit.logger, a
+      // late static, so a non-matching request (which reaches onResponse
+      // normally) needs the toolkit initialized first.
+      FlutterDevToolkit.init(
+        config: DevToolkitConfig(
+          logger: DefaultLogger(),
+          disableBuiltInPlugins: BuiltInPluginType.values,
+        ),
+      );
+    });
+    tearDown(() {
+      NetworkMockStore.clear();
+      NetworkLogStore.clear();
+    });
+
+    test(
+      'a matching rule short-circuits before the adapter is called',
+      () async {
+        final adapter = _RecordingHttpClientAdapter();
+        final dio =
+            Dio()
+              ..httpClientAdapter = adapter
+              ..interceptors.add(DioNetworkInterceptor());
+
+        NetworkMockStore.add(
+          NetworkMockRule(
+            urlContains: '/users',
+            statusCode: 201,
+            responseBody: '{"mocked":true}',
+          ),
+        );
+
+        final response = await dio.get('https://api.test/users');
+
+        expect(adapter.fetchCalled, isFalse);
+        expect(response.statusCode, 201);
+        expect(response.data, '{"mocked":true}');
+        expect(NetworkLogStore.logs.single.isMocked, isTrue);
+      },
+    );
+
+    test('a non-matching request reaches the adapter as normal', () async {
+      final adapter = _RecordingHttpClientAdapter();
+      final dio =
+          Dio()
+            ..httpClientAdapter = adapter
+            ..interceptors.add(DioNetworkInterceptor());
+
+      NetworkMockStore.add(NetworkMockRule(urlContains: '/other'));
+
+      final response = await dio.get('https://api.test/users');
+
+      expect(adapter.fetchCalled, isTrue);
+      // Dio auto-parses a JSON content-type response into a Map.
+      expect(response.data, {'real': true});
+      expect(NetworkLogStore.logs.single.isMocked, isFalse);
+    });
+  });
+
   group('FeatureFlagStore', () {
     setUp(FeatureFlagStore.clear);
     tearDown(FeatureFlagStore.clear);
@@ -1159,4 +1387,32 @@ NetworkLog _log({
     isError: isError,
     startedAt: startedAt,
   );
+}
+
+/// A [HttpClientAdapter] that records whether it was ever asked to make a
+/// real request, and otherwise returns a canned "real" response. Dio ships
+/// this abstract class itself, so implementing a fake needs no extra test
+/// dependency — the same way `http.testing.MockClient` covers the `http`
+/// client above.
+class _RecordingHttpClientAdapter implements HttpClientAdapter {
+  bool fetchCalled = false;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    fetchCalled = true;
+    return ResponseBody.fromString(
+      '{"real":true}',
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
 }

@@ -173,6 +173,27 @@ class _NetworkTabState extends State<NetworkTab> {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        if (log.isMocked) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.purple.shade100,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'MOCKED',
+                              style: TextStyle(
+                                color: Colors.purple.shade900,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(

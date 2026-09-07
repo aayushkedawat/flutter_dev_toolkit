@@ -21,6 +21,7 @@ Track logs, API calls, navigation, lifecycle events, screen transitions, app sta
 - ✅ Deep link inspector with query parameter breakdown
 - ✅ Storage inspector — view, add, edit and delete SharedPreferences entries live
 - ✅ Runtime feature flags — flip app-registered flags without a rebuild
+- ✅ Network response mocking — short-circuit a request with a canned status/body/delay
 - ✅ Lifecycle event logging
 - ✅ Device info panel
 - ✅ Export logs, network calls (JSON, cURL, HAR 1.2) and route data
@@ -159,6 +160,25 @@ Pass the configured Dio instance to your Retrofit client:
 ```dart
 final api = MyApiClient(Dio()..interceptors.add(DioNetworkInterceptor()));
 ```
+
+### Mocking a response
+
+Manage mock rules from the Network tab's config panel (the tune icon in its
+app bar), or add one directly:
+
+```dart
+NetworkMockStore.add(NetworkMockRule(
+  urlContains: '/api/users',   // case-insensitive substring match
+  method: 'GET',               // null matches any method
+  statusCode: 200,
+  responseBody: '{"id": 1, "name": "Ada"}',
+  delay: Duration(milliseconds: 300), // simulate latency; defaults to none
+));
+```
+
+A matching request never reaches the network — both `HttpInterceptor` and
+`DioNetworkInterceptor` short-circuit it — and shows up in the Network tab
+tagged `MOCKED`. The first enabled rule that matches wins.
 
 ---
 

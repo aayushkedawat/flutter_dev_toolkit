@@ -6,6 +6,7 @@ import 'package:flutter_dev_toolkit/interceptors/network_interceptor.dart';
 import '../../core/dev_toolkit_plugin.dart';
 import '../core/network_log_store.dart';
 import '../../interceptors/network/network_log.dart';
+import 'widgets/network_mock_panel.dart';
 import 'widgets/network_tab.dart';
 
 class NetworkPlugin extends DevToolkitPlugin {
@@ -22,6 +23,9 @@ class NetworkPlugin extends DevToolkitPlugin {
 
   @override
   Widget buildTab(BuildContext context) => const NetworkTab();
+
+  @override
+  Widget? buildConfig(BuildContext context) => const NetworkMockPanel();
 
   @override
   List<Widget> buildActions(BuildContext context) {

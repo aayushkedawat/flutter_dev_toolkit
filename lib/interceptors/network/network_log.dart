@@ -15,6 +15,10 @@ class NetworkLog {
   final bool isError;
   final DateTime startedAt;
 
+  /// True when this call was short-circuited by a [NetworkMockRule] instead
+  /// of reaching the network.
+  final bool isMocked;
+
   NetworkLog({
     required this.method,
     required this.url,
@@ -24,6 +28,7 @@ class NetworkLog {
     this.responseBody,
     required this.duration,
     this.isError = false,
+    this.isMocked = false,
     DateTime? startedAt,
   }) : startedAt = startedAt ?? DateTime.now();
 
@@ -47,6 +52,7 @@ class NetworkLog {
       'responseBody': _parseIfJson(responseBody),
       'duration': duration.inMilliseconds,
       'isError': isError,
+      'isMocked': isMocked,
     };
   }
 

@@ -117,7 +117,8 @@ Every plugin extends `DevToolkitPlugin` and can override:
 | `lib/interceptors/route_interceptor.dart` | NavigatorObserver tracking stack and history with durations |
 | `lib/interceptors/network/http_interceptor.dart` | Wraps `http.BaseClient` |
 | `lib/interceptors/network/dio_interceptor.dart` | Extends Dio `Interceptor` |
-| `lib/interceptors/network/network_log.dart` | Network record + JSON and HAR 1.2 serialization |
+| `lib/interceptors/network/network_log.dart` | Network record + JSON, HAR 1.2, and cURL serialization |
+| `lib/interceptors/network/network_mock_rule.dart` / `network_mock_store.dart` | Mock rules (URL substring + optional method → status/body/delay) checked by both interceptors before a request reaches the network |
 | `lib/built_in_plugins/logs_plugin.dart` | Logs tab: filter by level and tag, export, clear |
 | `lib/built_in_plugins/network_plugin.dart` | Network tab: request replay, JSON and HAR export |
 | `lib/built_in_plugins/crash_plugin.dart` | Crashes tab: captured errors with stack traces |
