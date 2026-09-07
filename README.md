@@ -19,6 +19,7 @@ Track logs, API calls, navigation, lifecycle events, screen transitions, app sta
 - ✅ Crash reporter — Flutter and unhandled async errors with stack traces
 - ✅ Performance monitor — FPS, memory (RSS), startup time and jank frames
 - ✅ Deep link inspector with query parameter breakdown
+- ✅ Storage inspector — view, add, edit and delete SharedPreferences entries live
 - ✅ Lifecycle event logging
 - ✅ Device info panel
 - ✅ Export logs, network calls (JSON, cURL, HAR 1.2) and route data
@@ -66,6 +67,7 @@ void main() {
         // BuiltInPluginType.crashes,
         // BuiltInPluginType.performance,
         // BuiltInPluginType.deepLinks,
+        // BuiltInPluginType.storage,
       ],
     ),
   );
@@ -209,6 +211,20 @@ GoRouter(
 
 ---
 
+## 🗄️ Storage Inspector
+
+The Storage tab reads and writes the app's `SharedPreferences` directly — no
+setup needed beyond enabling the plugin (it's on by default). Add, edit, and
+delete entries of any type `SharedPreferences` supports (`bool`, `int`,
+`double`, `String`, `List<String>`), with search and JSON export.
+
+Since `SharedPreferences` has no change notifications of its own, the tab
+loads a snapshot on open and after every edit made through it; it won't pick
+up a write your app makes directly while the tab happens to be open — use the
+refresh button for that.
+
+---
+
 ## 🔍 App State Inspector
 
 Inspect state transitions, showing each change's previous and current value.
@@ -295,6 +311,7 @@ You can export relevant data directly from each plugin’s tab:
 - Route Tracker → Export route stack and navigation history
 - Crashes → Export captured errors with stack traces
 - Deep Links → Export recorded links as JSON
+- Storage → Export all SharedPreferences entries as JSON
 
 ---
 

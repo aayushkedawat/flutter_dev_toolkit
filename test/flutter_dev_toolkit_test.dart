@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_dev_toolkit/core/crash_log_store.dart';
 import 'package:flutter_dev_toolkit/core/default_logger.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_dev_toolkit/core/dev_toolkit_config.dart';
 import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/core/network_log_store.dart';
 import 'package:flutter_dev_toolkit/core/platform_probe.dart';
+import 'package:flutter_dev_toolkit/core/storage_inspector_store.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/network_log.dart';
 import 'package:flutter_dev_toolkit/interceptors/performance/frame_drop_detector.dart';
@@ -605,6 +607,91 @@ void main() {
       expect(
         () => FrameDropDetector.jankFrames.add(
           JankFrame(build: Duration.zero, raster: Duration.zero),
+        ),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
+  group('StorageInspectorStore', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('refresh() loads entries sorted by key', () async {
+      SharedPreferences.setMockInitialValues({'zebra': true, 'apple': 'red'});
+
+      await StorageInspectorStore.refresh();
+
+      expect(StorageInspectorStore.isLoaded, isTrue);
+      final keys = StorageInspectorStore.entries.map((e) => e.key).toList();
+      expect(keys, ['apple', 'zebra']);
+    });
+
+    test('setValue writes and reflects each supported type', () async {
+      await StorageInspectorStore.refresh();
+
+      await StorageInspectorStore.setValue('flag', true);
+      await StorageInspectorStore.setValue('count', 3);
+      await StorageInspectorStore.setValue('ratio', 1.5);
+      await StorageInspectorStore.setValue('name', 'ada');
+      await StorageInspectorStore.setValue('tags', ['a', 'b']);
+
+      final byKey = {
+        for (final e in StorageInspectorStore.entries) e.key: e.value,
+      };
+      expect(byKey['flag'], true);
+      expect(byKey['count'], 3);
+      expect(byKey['ratio'], 1.5);
+      expect(byKey['name'], 'ada');
+      expect(byKey['tags'], ['a', 'b']);
+    });
+
+    test('setValue rejects an unsupported type', () async {
+      await StorageInspectorStore.refresh();
+
+      expect(
+        () => StorageInspectorStore.setValue('bad', DateTime.now()),
+        throwsArgumentError,
+      );
+    });
+
+    test('remove deletes a single key', () async {
+      SharedPreferences.setMockInitialValues({'a': 1, 'b': 2});
+      await StorageInspectorStore.refresh();
+
+      await StorageInspectorStore.remove('a');
+
+      final keys = StorageInspectorStore.entries.map((e) => e.key).toList();
+      expect(keys, ['b']);
+    });
+
+    test('clearAll empties every entry', () async {
+      SharedPreferences.setMockInitialValues({'a': 1, 'b': 2});
+      await StorageInspectorStore.refresh();
+
+      await StorageInspectorStore.clearAll();
+
+      expect(StorageInspectorStore.entries, isEmpty);
+    });
+
+    test('bumps version on refresh and write', () async {
+      final before = StorageInspectorStore.version.value;
+
+      await StorageInspectorStore.refresh();
+      final afterRefresh = StorageInspectorStore.version.value;
+      expect(afterRefresh, greaterThan(before));
+
+      await StorageInspectorStore.setValue('k', 'v');
+      expect(StorageInspectorStore.version.value, greaterThan(afterRefresh));
+    });
+
+    test('entries is an unmodifiable view', () async {
+      await StorageInspectorStore.refresh();
+
+      expect(
+        () => StorageInspectorStore.entries.add(
+          const StorageEntry(key: 'x', value: 1),
         ),
         throwsUnsupportedError,
       );

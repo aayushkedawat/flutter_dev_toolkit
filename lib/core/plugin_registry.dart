@@ -2,6 +2,7 @@ import 'package:flutter_dev_toolkit/built_in_plugins/crash_plugin.dart';
 import 'package:flutter_dev_toolkit/built_in_plugins/deep_link_plugin.dart';
 import 'package:flutter_dev_toolkit/built_in_plugins/performance_plugin.dart';
 import 'package:flutter_dev_toolkit/built_in_plugins/routes_plugin.dart';
+import 'package:flutter_dev_toolkit/built_in_plugins/storage_plugin.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import '../built_in_plugins/device_info_plugin.dart';
 import '../built_in_plugins/logs_plugin.dart';
@@ -27,5 +28,6 @@ class PluginRegistry {
     tryAdd(BuiltInPluginType.crashes, CrashPlugin());
     tryAdd(BuiltInPluginType.performance, PerformancePlugin());
     tryAdd(BuiltInPluginType.deepLinks, DeepLinkPlugin());
+    tryAdd(BuiltInPluginType.storage, StoragePlugin());
   }
 }

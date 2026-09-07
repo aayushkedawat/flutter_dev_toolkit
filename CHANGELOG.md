@@ -16,6 +16,8 @@
 - **Status filtering in the Network tab** — filter by 2xx/3xx/4xx/5xx or failed, alongside the existing method filter, with a match count.
 - **Tag filtering in the Logs tab** — the filter was already applied when building the list, but there was no UI to select a tag until now.
 - **State inspection beyond Bloc** — `RecordedStateAdapter` lets an app push state changes in from any framework. Riverpod's `ProviderObserver` and Provider's `ChangeNotifier` each wire up in a few lines, documented on the class, without the toolkit taking on those dependencies.
+- **Storage plugin** — view, add, edit and delete `SharedPreferences` entries live from the console, with search and JSON export. Adds `shared_preferences` as a dependency.
+- **FPS/memory history sparklines** in the Performance tab — a rolling ~60-sample window rendered as a small line chart, so a dip that only happens during a scroll, or memory that's climbing rather than flat, is visible as a trend instead of only ever showing an instantaneous snapshot.
 
 ### 🐛 Fixes
 - Fixed a compile error in `PerformanceTab`, which referenced an undefined `FrameTimingCallback` type. The package did not analyze or build before this fix.
@@ -36,6 +38,8 @@
 - `NetworkLogDetailPage` carried its own copy of the `_parseIfJson(String?)` bug, so exporting a Dio-captured call from the detail page threw.
 - The Performance tab's frame callback re-armed itself unconditionally and so kept requesting frames for the life of the app after the tab was disposed. It now stops on dispose.
 - `ColdStartTimer`, `FrameDropDetector` and `DevConsoleTheme` had shipped since earlier versions as unreachable code — nothing ever called them. All three are now wired up.
+- **`PerformanceTab` and `DeviceInfoTab` crashed on web at runtime.** Both referenced `dart:io` (`ProcessInfo`, `Platform`) directly; those members throw `UnsupportedError` the moment they're actually read on web (confirmed by compiling the exact code with `dart compile js` and running the output). `PerformanceTab` already caught its one call, so it only degraded memory reporting to "N/A"; `DeviceInfoTab` did not catch any of its four calls, so opening that tab on a web build threw uncaught. Both now go through conditional-import shims that never touch `dart:io` on web, and Device Info reports real values there via `device_info_plus`'s `WebBrowserInfo`.
+- `DeviceInfoTab.getDeviceInfo()` re-runs on every `didChangeDependencies` (e.g. a rotation) but appended to `DeviceInfoLogStore` instead of clearing it first, so the exported device info accumulated duplicate copies of every key over the session.
 
 ### 📦 Housekeeping
 - Removed the deprecated Actions plugin and tab (fully commented out since 1.3.0) and its stale screenshot.
