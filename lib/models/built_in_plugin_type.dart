@@ -7,4 +7,5 @@ enum BuiltInPluginType {
   performance,
   deepLinks,
   storage,
+  featureFlags,
 }

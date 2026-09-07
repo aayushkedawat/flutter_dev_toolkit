@@ -7,6 +7,8 @@ import 'package:flutter_dev_toolkit/interceptors/network/dio_interceptor.dart';
 import 'package:flutter_dev_toolkit/models/log_tag.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'example_flags.dart';
+
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
@@ -110,6 +112,7 @@ class HomePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _LiveFlagsBanner(),
           const _SectionHeader('Logs'),
           _DemoButton(
             label: 'Log a Message',
@@ -162,6 +165,58 @@ class HomePage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Reacts live to two flags registered in example_flags.dart. Toggle them
+/// from the toolkit's Flags tab — no rebuild of the app, no hot reload.
+class _LiveFlagsBanner extends StatelessWidget {
+  const _LiveFlagsBanner();
+
+  static const _accentColors = {
+    'blue': Colors.blue,
+    'purple': Colors.purple,
+    'green': Colors.green,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Object>(
+      valueListenable: showPromoBannerFlag.notifier,
+      builder: (context, showBanner, _) {
+        if (showBanner != true) return const SizedBox.shrink();
+
+        return ValueListenableBuilder<Object>(
+          valueListenable: accentColorFlag.notifier,
+          builder: (context, accent, _) {
+            final color = _accentColors[accent] ?? Colors.blue;
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withAlpha(30),
+                border: Border.all(color: color),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.campaign, color: color),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Promo banner — driven by the "Show Promo Banner" and '
+                      '"Accent Color" flags. Try flipping them from the '
+                      'Flags tab.',
+                      style: TextStyle(color: color.withAlpha(220)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
