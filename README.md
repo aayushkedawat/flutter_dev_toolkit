@@ -17,7 +17,7 @@ Track logs, API calls, navigation, lifecycle events, screen transitions, app sta
 - ✅ Route stack and screen duration tracker
 - ✅ Search and filtering — by level and tag in logs, by method and status class in network
 - ✅ Crash reporter — Flutter and unhandled async errors with stack traces
-- ✅ Performance monitor — FPS, memory (RSS), startup time and jank frames
+- ✅ Performance monitor — FPS, memory (RSS), startup time, jank frames, and a rolling history sparkline
 - ✅ Deep link inspector with query parameter breakdown
 - ✅ Storage inspector — view, add, edit and delete SharedPreferences entries live
 - ✅ Runtime feature flags — flip app-registered flags without a rebuild
@@ -356,12 +356,14 @@ FlutterDevToolkit.logger.log('Error occurred', level: LogLevel.error);
 You can export relevant data directly from each plugin’s tab:
 
 - Logs Plugin → Export filtered logs
-- Network Plugin → Export captured network calls as JSON, or as a HAR 1.2
-  archive you can open in Chrome DevTools, Postman or Charles Proxy
+- Network Plugin → Export captured network calls as JSON, as a runnable cURL
+  command, or as a HAR 1.2 archive you can open in Chrome DevTools, Postman or
+  Charles Proxy
 - Route Tracker → Export route stack and navigation history
 - Crashes → Export captured errors with stack traces
 - Deep Links → Export recorded links as JSON
 - Storage → Export all SharedPreferences entries as JSON
+- Flags → Export all registered feature flags and their current values as JSON
 
 ---
 
