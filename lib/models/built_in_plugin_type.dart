@@ -6,4 +6,5 @@ enum BuiltInPluginType {
   crashes,
   performance,
   deepLinks,
+  storage,
 }

@@ -5,6 +5,7 @@ import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/deep_link_observer.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/dio_interceptor.dart';
 import 'package:flutter_dev_toolkit/models/log_tag.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -68,6 +69,17 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  Future<void> _writeSamplePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('onboarding_complete', true);
+    await prefs.setInt(
+        'session_count', (prefs.getInt('session_count') ?? 0) + 1);
+    await prefs.setString('last_screen', 'home');
+    await prefs
+        .setStringList('recent_searches', ['flutter', 'dart', 'widgets']);
+    FlutterDevToolkit.logger.log('Wrote sample SharedPreferences entries');
+  }
+
   void _simulateDeepLink() {
     DevToolkitDeepLinkObserver.onLinkReceived(
       'myapp://products/42?ref=email&campaign=spring_sale',
@@ -126,6 +138,11 @@ class HomePage extends StatelessWidget {
           ),
           const _SectionHeader('Performance'),
           _DemoButton(label: 'Cause Jank (600ms)', onPressed: _causeJank),
+          const _SectionHeader('Storage'),
+          _DemoButton(
+            label: 'Write Sample SharedPreferences',
+            onPressed: _writeSamplePreferences,
+          ),
           const _SectionHeader('Deep Links'),
           _DemoButton(
             label: 'Simulate a Deep Link',

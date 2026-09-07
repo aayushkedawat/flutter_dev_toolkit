@@ -6,7 +6,7 @@ This file provides guidance for AI assistants working on this codebase.
 
 ## Project Overview
 
-**Flutter Dev Toolkit** is a modular, in-app developer console for Flutter applications. It provides a floating overlay UI with real-time monitoring: logs, network requests, route history, device info, crashes, performance metrics, deep links, and state inspection. It is published as a pub.dev package (`flutter_dev_toolkit`, version 1.4.0).
+**Flutter Dev Toolkit** is a modular, in-app developer console for Flutter applications. It provides a floating overlay UI with real-time monitoring: logs, network requests, route history, device info, crashes, performance metrics, deep links, local storage, and state inspection. It is published as a pub.dev package (`flutter_dev_toolkit`, version 1.4.0).
 
 ---
 
@@ -112,6 +112,7 @@ Every plugin extends `DevToolkitPlugin` and can override:
 | `lib/plugins/state_inspector/recorded_state_adapter.dart` | `RecordedStateAdapter` for pushing in Riverpod/Provider/etc. state |
 | `lib/core/crash_log_store.dart` | Crash buffer, hard-capped at 200 entries |
 | `lib/core/deep_link_store.dart` | Deep link buffer, hard-capped at 200 entries |
+| `lib/core/storage_inspector_store.dart` | Cached, editable snapshot of `SharedPreferences`, refreshed on demand |
 | `lib/interceptors/route_interceptor.dart` | NavigatorObserver tracking stack and history with durations |
 | `lib/interceptors/network/http_interceptor.dart` | Wraps `http.BaseClient` |
 | `lib/interceptors/network/dio_interceptor.dart` | Extends Dio `Interceptor` |
@@ -121,6 +122,7 @@ Every plugin extends `DevToolkitPlugin` and can override:
 | `lib/built_in_plugins/crash_plugin.dart` | Crashes tab: captured errors with stack traces |
 | `lib/built_in_plugins/performance_plugin.dart` | Performance tab: FPS, RSS memory, jank frames |
 | `lib/built_in_plugins/deep_link_plugin.dart` | Deep links tab: URI and query parameter inspector |
+| `lib/built_in_plugins/storage_plugin.dart` | Storage tab: view, add, edit, delete SharedPreferences entries |
 | `lib/plugins/state_inspector/app_state_inspector_plugin.dart` | State inspector with split layout |
 | `lib/plugins/adapters/bloc_adapter.dart` | `BlocAdapter` wires BlocObserver into state inspector |
 | `lib/ui/log_overlay.dart` | Draggable floating overlay toggle (FAB) with error badge |
@@ -192,6 +194,7 @@ fails on `info`-level lints, so a stray unused import will break the build.
 | `dio` | `^5.2.0 <6.0.0` | Network interception for Dio users |
 | `http` | `^0.13.0 <2.0.0` | Network interception for http package users |
 | `device_info_plus` | `^11.4.0 <=12.0.0` | Device info panel |
+| `shared_preferences` | `^2.2.0 <3.0.0` | Storage tab (view/edit local key-value storage) |
 | `share_plus` | `^11.0.0 <=12.0.0` | Log/network export via share sheet |
 | `intl` | `^0.19.0 <=0.30.0` | Timestamp formatting |
 
