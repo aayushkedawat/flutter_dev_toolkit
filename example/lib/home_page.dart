@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/deep_link_observer.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/dio_interceptor.dart';
+import 'package:flutter_dev_toolkit/interceptors/network/http_interceptor.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/network_mock_rule.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/network_mock_store.dart';
 import 'package:flutter_dev_toolkit/models/log_tag.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'counter_cubit.dart';
 import 'example_flags.dart';
 
 class HomePage extends StatelessWidget {
@@ -20,9 +23,35 @@ class HomePage extends StatelessWidget {
 
     try {
       await dio.get('https://jsonplaceholder.typicode.com/posts/1');
-      FlutterDevToolkit.logger.log('Dio request complete');
+      FlutterDevToolkit.logger.log(
+        'Dio request complete (configured timeout: '
+        '${apiTimeoutSecondsFlag.value}s)',
+      );
     } catch (e) {
       FlutterDevToolkit.logger.log('Dio error: $e', level: LogLevel.error);
+    }
+  }
+
+  /// Same call as above, but through the plain `http` package instead of
+  /// Dio — wrapping the client in `HttpInterceptor` is the only toolkit-
+  /// specific line.
+  Future<void> _makeHttpPackageRequest() async {
+    final client = HttpInterceptor();
+
+    try {
+      final response = await client.get(
+        Uri.parse('https://jsonplaceholder.typicode.com/posts/3'),
+      );
+      FlutterDevToolkit.logger.log(
+        'http package request complete (${response.statusCode})',
+      );
+    } catch (e) {
+      FlutterDevToolkit.logger.log(
+        'http package error: $e',
+        level: LogLevel.error,
+      );
+    } finally {
+      client.close();
     }
   }
 
@@ -136,6 +165,7 @@ class HomePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const _WelcomeMessage(),
           _LiveFlagsBanner(),
           const _SectionHeader('Logs'),
           _DemoButton(
@@ -149,7 +179,11 @@ class HomePage extends StatelessWidget {
           ),
           const _SectionHeader('Network'),
           _DemoButton(
-              label: 'Make Network Request', onPressed: _makeDioRequest),
+              label: 'Make Network Request (Dio)', onPressed: _makeDioRequest),
+          _DemoButton(
+            label: 'Make Network Request (http package)',
+            onPressed: _makeHttpPackageRequest,
+          ),
           _DemoButton(
             label: 'Make Failing Request (404)',
             onPressed: _makeFailingRequest,
@@ -174,6 +208,16 @@ class HomePage extends StatelessWidget {
             label: 'Write Sample SharedPreferences',
             onPressed: _writeSamplePreferences,
           ),
+          const _SectionHeader('App State (Bloc)'),
+          const _CounterDisplay(),
+          _DemoButton(
+            label: 'Increment Counter',
+            onPressed: counterCubit.increment,
+          ),
+          _DemoButton(
+            label: 'Decrement Counter',
+            onPressed: counterCubit.decrement,
+          ),
           const _SectionHeader('Deep Links'),
           _DemoButton(
             label: 'Simulate a Deep Link',
@@ -192,6 +236,27 @@ class HomePage extends StatelessWidget {
             style: TextStyle(fontSize: 12, color: Colors.black54),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Reacts live to the string-typed welcome_message flag — edit its value
+/// from the Flags tab (tap the value, type a new one, Save) to see it change
+/// here immediately.
+class _WelcomeMessage extends StatelessWidget {
+  const _WelcomeMessage();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<Object>(
+      valueListenable: welcomeMessageFlag.notifier,
+      builder: (context, message, _) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Text(
+          message.toString(),
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        ),
       ),
     );
   }
@@ -245,6 +310,24 @@ class _LiveFlagsBanner extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// Every increment/decrement here is one Cubit state change, picked up by
+/// DevBlocObserver and visible in the toolkit's App State tab with both the
+/// new and previous value.
+class _CounterDisplay extends StatelessWidget {
+  const _CounterDisplay();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<CounterCubit, int>(
+      bloc: counterCubit,
+      builder: (context, count) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text('Counter: $count', style: const TextStyle(fontSize: 14)),
+      ),
     );
   }
 }

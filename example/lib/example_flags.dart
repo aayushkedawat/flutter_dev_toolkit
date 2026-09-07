@@ -21,3 +21,21 @@ final accentColorFlag = FeatureFlagStore.register(
     options: ['blue', 'purple', 'green'],
   ),
 );
+
+final welcomeMessageFlag = FeatureFlagStore.register(
+  FeatureFlag(
+    key: 'welcome_message',
+    label: 'Welcome Message',
+    type: FeatureFlagType.string,
+    defaultValue: 'Welcome to the Dev Toolkit example!',
+  ),
+);
+
+final apiTimeoutSecondsFlag = FeatureFlagStore.register(
+  FeatureFlag(
+    key: 'api_timeout_seconds',
+    label: 'API Timeout (seconds)',
+    type: FeatureFlagType.number,
+    defaultValue: 30,
+  ),
+);
