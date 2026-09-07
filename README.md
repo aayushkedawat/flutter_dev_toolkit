@@ -298,25 +298,6 @@ You can export relevant data directly from each plugin’s tab:
 
 ---
 
-## 🖼️ Screenshots
-
-<h4>Log Console</h4>
-<img src="screenshots/logs.png" width="260"/>
-
-<h4>Bloc Inspector – Overview</h4>
-<img src="screenshots/bloc_inspector.png" width="260"/>
-
-<h4>Device Info</h4>
-<img src="screenshots/device_info.png" width="260"/>
-
-<h4>Network Interceptor</h4>
-<img src="screenshots/network_interceptor.png" width="260"/>
-
-<h4>Route Tracker</h4>
-<img src="screenshots/route.png" width="260"/>
-
----
-
 ## 📄 License
 
 MIT
