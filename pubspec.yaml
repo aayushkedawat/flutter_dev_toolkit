@@ -1,5 +1,5 @@
 name: flutter_dev_toolkit
-description: "A powerful, modular in-app developer console for Flutter apps. Includes logs, network inspector, route tracker, performance tools, and plugin system."
+description: "A modular in-app developer console for Flutter: logs, network inspector with mocking, crash reports, performance, storage, feature flags, and a plugin system."
 version: 1.4.0
 homepage: https://github.com/aayushkedawat/flutter_dev_toolkit
 repository: https://github.com/aayushkedawat/flutter_dev_toolkit
