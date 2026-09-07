@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../../core/dev_console_theme.dart';
 import 'package:flutter/scheduler.dart';
@@ -5,6 +7,7 @@ import 'package:flutter/scheduler.dart';
 import '../../interceptors/performance/cold_start_timer.dart';
 import '../../interceptors/performance/frame_drop_detector.dart';
 import '../../interceptors/performance/memory_probe.dart';
+import '../../interceptors/performance/performance_history.dart';
 
 class PerformanceTab extends StatefulWidget {
   const PerformanceTab({super.key});
@@ -40,6 +43,7 @@ class _PerformanceTabState extends State<PerformanceTab> {
         _frameCount = 0;
         _lastFpsUpdate = now;
         _updateMemory();
+        PerformanceHistory.record(fps: fps, memoryMb: currentMemoryMb());
         if (mounted) setState(() => _fps = fps);
       }
 
@@ -67,6 +71,7 @@ class _PerformanceTabState extends State<PerformanceTab> {
       listenable: Listenable.merge([
         FrameDropDetector.version,
         ColdStartTimer.version,
+        PerformanceHistory.version,
       ]),
       builder: (context, _) {
         final totalFrames = FrameDropDetector.totalFrames;
@@ -114,6 +119,26 @@ class _PerformanceTabState extends State<PerformanceTab> {
                   '${FrameDropDetector.budget.inMilliseconds} ms',
             ),
             const SizedBox(height: 24),
+            if (PerformanceHistory.samples.length >= 2) ...[
+              _HistorySection(
+                title: 'FPS (LAST ${PerformanceHistory.samples.length}S)',
+                color: Colors.blue,
+                values: PerformanceHistory.samples.map((s) => s.fps).toList(),
+              ),
+              const SizedBox(height: 16),
+              if (PerformanceHistory.samples.any((s) => s.memoryMb != null))
+                _HistorySection(
+                  title:
+                      'MEMORY MB (LAST ${PerformanceHistory.samples.length}S)',
+                  color: Colors.purple,
+                  values:
+                      PerformanceHistory.samples
+                          .where((s) => s.memoryMb != null)
+                          .map((s) => s.memoryMb!.toDouble())
+                          .toList(),
+                ),
+              const SizedBox(height: 24),
+            ],
             if (FrameDropDetector.jankFrames.isNotEmpty) ...[
               Text(
                 'RECENT JANK FRAMES',
@@ -165,6 +190,134 @@ class _PerformanceTabState extends State<PerformanceTab> {
     if (coldStart.inMilliseconds < 1500) return Colors.orange;
     return Colors.red;
   }
+}
+
+class _HistorySection extends StatelessWidget {
+  const _HistorySection({
+    required this.title,
+    required this.color,
+    required this.values,
+  });
+
+  final String title;
+  final Color color;
+  final List<double> values;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: palette.subtle,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
+              ),
+            ),
+            Text(
+              values.last.toStringAsFixed(0),
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        _Sparkline(values: values, color: color),
+      ],
+    );
+  }
+}
+
+/// A minimal line chart with no charting dependency — this package stays at
+/// zero third-party UI deps by design.
+class _Sparkline extends StatelessWidget {
+  const _Sparkline({required this.values, required this.color});
+
+  final List<double> values;
+  final Color color;
+
+  static const double _height = 48;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: _height,
+      width: double.infinity,
+      child: CustomPaint(
+        painter: _SparklinePainter(values: values, color: color),
+      ),
+    );
+  }
+}
+
+class _SparklinePainter extends CustomPainter {
+  _SparklinePainter({required this.values, required this.color});
+
+  final List<double> values;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.length < 2) return;
+
+    final maxV = values.reduce(math.max);
+    final minV = values.reduce(math.min);
+    // A flat series (e.g. a constant 60fps) would divide by zero; fall back to
+    // drawing a flat line across the middle instead.
+    final range = (maxV - minV) < 1e-6 ? 1.0 : (maxV - minV);
+    final dx = size.width / (values.length - 1);
+
+    double yFor(double v) => size.height - ((v - minV) / range) * size.height;
+
+    final linePath = Path();
+    final fillPath = Path()..moveTo(0, size.height);
+
+    for (var i = 0; i < values.length; i++) {
+      final x = i * dx;
+      final y = yFor(values[i]);
+      if (i == 0) {
+        linePath.moveTo(x, y);
+      } else {
+        linePath.lineTo(x, y);
+      }
+      fillPath.lineTo(x, y);
+    }
+    fillPath
+      ..lineTo(size.width, size.height)
+      ..close();
+
+    canvas.drawPath(
+      fillPath,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withAlpha(70), color.withAlpha(0)],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, size.height)),
+    );
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = color
+        ..strokeWidth = 2
+        ..style = PaintingStyle.stroke
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SparklinePainter oldDelegate) =>
+      !identical(oldDelegate.values, values) || oldDelegate.color != color;
 }
 
 class _JankRow extends StatelessWidget {

@@ -17,6 +17,7 @@ import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/network_log.dart';
 import 'package:flutter_dev_toolkit/interceptors/performance/frame_drop_detector.dart';
 import 'package:flutter_dev_toolkit/interceptors/performance/memory_probe.dart';
+import 'package:flutter_dev_toolkit/interceptors/performance/performance_history.dart';
 import 'package:flutter_dev_toolkit/interceptors/route_interceptor.dart';
 import 'package:flutter_dev_toolkit/models/built_in_plugin_type.dart';
 import 'package:flutter_dev_toolkit/plugins/adapters/bloc_adapter.dart';
@@ -604,6 +605,62 @@ void main() {
       expect(
         () => FrameDropDetector.jankFrames.add(
           JankFrame(build: Duration.zero, raster: Duration.zero),
+        ),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
+  group('PerformanceHistory', () {
+    setUp(PerformanceHistory.clear);
+    tearDown(PerformanceHistory.clear);
+
+    test('records fps and memory samples in order', () {
+      PerformanceHistory.record(fps: 60, memoryMb: 120);
+      PerformanceHistory.record(fps: 45, memoryMb: 130);
+
+      final samples = PerformanceHistory.samples;
+      expect(samples.length, 2);
+      expect(samples[0].fps, 60);
+      expect(samples[0].memoryMb, 120);
+      expect(samples[1].fps, 45);
+      expect(samples[1].memoryMb, 130);
+    });
+
+    test('allows a null memory reading (e.g. on web)', () {
+      PerformanceHistory.record(fps: 60);
+
+      expect(PerformanceHistory.samples.single.memoryMb, isNull);
+    });
+
+    test('drops the oldest sample once the cap is reached', () {
+      for (var i = 0; i < PerformanceHistory.maxSamples + 10; i++) {
+        PerformanceHistory.record(fps: i.toDouble());
+      }
+
+      final samples = PerformanceHistory.samples;
+      expect(samples.length, PerformanceHistory.maxSamples);
+      expect(samples.first.fps, 10);
+      expect(samples.last.fps, PerformanceHistory.maxSamples + 9);
+    });
+
+    test('bumps version on record and clear', () {
+      final before = PerformanceHistory.version.value;
+
+      PerformanceHistory.record(fps: 60);
+      final afterRecord = PerformanceHistory.version.value;
+      expect(afterRecord, greaterThan(before));
+
+      PerformanceHistory.clear();
+      expect(PerformanceHistory.version.value, greaterThan(afterRecord));
+    });
+
+    test('samples is an unmodifiable view', () {
+      PerformanceHistory.record(fps: 60);
+
+      expect(
+        () => PerformanceHistory.samples.add(
+          PerformanceSample(at: DateTime.now(), fps: 1),
         ),
         throwsUnsupportedError,
       );
