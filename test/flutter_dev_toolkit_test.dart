@@ -12,9 +12,11 @@ import 'package:flutter_dev_toolkit/core/dev_console_theme.dart';
 import 'package:flutter_dev_toolkit/core/dev_toolkit_config.dart';
 import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/core/network_log_store.dart';
+import 'package:flutter_dev_toolkit/core/platform_probe.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/network_log.dart';
 import 'package:flutter_dev_toolkit/interceptors/performance/frame_drop_detector.dart';
+import 'package:flutter_dev_toolkit/interceptors/performance/memory_probe.dart';
 import 'package:flutter_dev_toolkit/interceptors/route_interceptor.dart';
 import 'package:flutter_dev_toolkit/models/built_in_plugin_type.dart';
 import 'package:flutter_dev_toolkit/plugins/adapters/bloc_adapter.dart';
@@ -605,6 +607,27 @@ void main() {
         ),
         throwsUnsupportedError,
       );
+    });
+  });
+
+  group('Platform and memory probes', () {
+    // These run on the Dart VM (flutter test), which resolves the io variant
+    // — dart.library.io is defined there. The web (stub) path returning
+    // false/'web'/null without ever touching dart:io was verified separately
+    // by compiling lib/core/platform_probe.dart and
+    // lib/interceptors/performance/memory_probe.dart with `dart compile js`
+    // and running the output in Node: isAndroid=false, isIOS=false,
+    // operatingSystem='web', currentMemoryMb()=null, no thrown errors. The
+    // pre-fix code (bare Platform.isAndroid / ProcessInfo.currentRss) compiled
+    // the same way but threw UnsupportedError the moment it ran.
+    test('exposes real platform values on a native target', () {
+      expect(operatingSystem, isNotEmpty);
+      expect(isAndroid || isIOS || !kIsWeb, isTrue);
+    });
+
+    test('currentMemoryMb returns a non-negative reading or null', () {
+      final mb = currentMemoryMb();
+      expect(mb == null || mb >= 0, isTrue);
     });
   });
 

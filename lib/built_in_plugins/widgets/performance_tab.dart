@@ -1,11 +1,10 @@
-import 'dart:io' show ProcessInfo;
-
 import 'package:flutter/material.dart';
 import '../../core/dev_console_theme.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../interceptors/performance/cold_start_timer.dart';
 import '../../interceptors/performance/frame_drop_detector.dart';
+import '../../interceptors/performance/memory_probe.dart';
 
 class PerformanceTab extends StatefulWidget {
   const PerformanceTab({super.key});
@@ -52,12 +51,8 @@ class _PerformanceTabState extends State<PerformanceTab> {
   }
 
   void _updateMemory() {
-    try {
-      final mb = (ProcessInfo.currentRss / 1024 / 1024).round();
-      if (mounted) setState(() => _memoryMb = mb);
-    } catch (_) {
-      // ProcessInfo is not available on web.
-    }
+    final mb = currentMemoryMb();
+    if (mb != null && mounted) setState(() => _memoryMb = mb);
   }
 
   @override
