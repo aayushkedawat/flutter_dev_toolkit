@@ -20,6 +20,7 @@ Track logs, API calls, navigation, lifecycle events, screen transitions, app sta
 - ✅ Performance monitor — FPS, memory (RSS), startup time and jank frames
 - ✅ Deep link inspector with query parameter breakdown
 - ✅ Storage inspector — view, add, edit and delete SharedPreferences entries live
+- ✅ Runtime feature flags — flip app-registered flags without a rebuild
 - ✅ Lifecycle event logging
 - ✅ Device info panel
 - ✅ Export logs, network calls (JSON, cURL, HAR 1.2) and route data
@@ -68,6 +69,7 @@ void main() {
         // BuiltInPluginType.performance,
         // BuiltInPluginType.deepLinks,
         // BuiltInPluginType.storage,
+        // BuiltInPluginType.featureFlags,
       ],
     ),
   );
@@ -222,6 +224,34 @@ Since `SharedPreferences` has no change notifications of its own, the tab
 loads a snapshot on open and after every edit made through it; it won't pick
 up a write your app makes directly while the tab happens to be open — use the
 refresh button for that.
+
+---
+
+## 🚩 Feature Flags
+
+Register a flag once, anywhere in your app, and it shows up in the Flags tab
+— flip it at runtime, no rebuild:
+
+```dart
+final showNewCheckout = FeatureFlagStore.register(FeatureFlag(
+  key: 'new_checkout_flow',
+  label: 'New Checkout Flow',
+  type: FeatureFlagType.boolean,
+  defaultValue: false,
+));
+
+// Anywhere that needs to react to it:
+ValueListenableBuilder(
+  valueListenable: showNewCheckout.notifier,
+  builder: (_, enabled, __) =>
+      (enabled as bool) ? const NewCheckout() : const OldCheckout(),
+);
+```
+
+`FeatureFlagType` also supports `string`, `number`, and `options` (a fixed
+set of values, via `FeatureFlag.options`). Re-registering the same `key` —
+safe to do on every `main()` run, including hot reload — returns the existing
+flag rather than resetting whatever it's currently set to.
 
 ---
 

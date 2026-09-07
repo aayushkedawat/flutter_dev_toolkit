@@ -7,9 +7,17 @@ import 'package:flutter_dev_toolkit/core/default_logger.dart';
 import 'package:flutter_dev_toolkit/ui/log_overlay.dart';
 
 import 'details_page.dart';
+import 'example_flags.dart';
 import 'home_page.dart';
 
 void main() {
+  // Referencing these forces their lazy top-level initializers — which call
+  // FeatureFlagStore.register — to run now, so both flags show up in the
+  // Flags tab immediately rather than only after something reads one of them.
+  debugPrint(
+    'Registered example flags: ${showPromoBannerFlag.key}, ${accentColorFlag.key}',
+  );
+
   FlutterDevToolkit.init(
     config: DevToolkitConfig(
       disableBuiltInPlugins: [

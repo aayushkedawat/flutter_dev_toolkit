@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_dev_toolkit/core/crash_log_store.dart';
 import 'package:flutter_dev_toolkit/core/default_logger.dart';
 import 'package:flutter_dev_toolkit/core/dev_console_theme.dart';
+import 'package:flutter_dev_toolkit/core/feature_flag_store.dart';
 import 'package:flutter_dev_toolkit/core/dev_toolkit_config.dart';
 import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/core/network_log_store.dart';
@@ -607,6 +608,161 @@ void main() {
       expect(
         () => FrameDropDetector.jankFrames.add(
           JankFrame(build: Duration.zero, raster: Duration.zero),
+        ),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
+  group('FeatureFlagStore', () {
+    setUp(FeatureFlagStore.clear);
+    tearDown(FeatureFlagStore.clear);
+
+    test('register() returns the same flag on a second call', () {
+      final first = FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'k',
+          label: 'K',
+          type: FeatureFlagType.boolean,
+          defaultValue: false,
+        ),
+      );
+      first.value = true;
+
+      final second = FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'k',
+          label: 'K',
+          type: FeatureFlagType.boolean,
+          defaultValue: false,
+        ),
+      );
+
+      expect(identical(first, second), isTrue);
+      expect(second.value, isTrue); // the toggle survived re-registration
+    });
+
+    test('get() finds a registered flag by key', () {
+      FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'k',
+          label: 'K',
+          type: FeatureFlagType.string,
+          defaultValue: 'a',
+        ),
+      );
+
+      expect(FeatureFlagStore.get('k')?.label, 'K');
+      expect(FeatureFlagStore.get('missing'), isNull);
+    });
+
+    test('resetAll() restores every flag to its default', () {
+      final a = FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'a',
+          label: 'A',
+          type: FeatureFlagType.number,
+          defaultValue: 1,
+        ),
+      );
+      final b = FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'b',
+          label: 'B',
+          type: FeatureFlagType.boolean,
+          defaultValue: false,
+        ),
+      );
+      a.value = 99;
+      b.value = true;
+
+      FeatureFlagStore.resetAll();
+
+      expect(a.value, 1);
+      expect(b.value, false);
+    });
+
+    test('reset() restores a single flag to its default', () {
+      final flag = FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'k',
+          label: 'K',
+          type: FeatureFlagType.string,
+          defaultValue: 'default',
+        ),
+      );
+      flag.value = 'changed';
+
+      flag.reset();
+
+      expect(flag.value, 'default');
+    });
+
+    test('notifies listeners when a flag value changes', () {
+      final flag = FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'k',
+          label: 'K',
+          type: FeatureFlagType.boolean,
+          defaultValue: false,
+        ),
+      );
+      var notified = 0;
+      flag.notifier.addListener(() => notified++);
+
+      flag.value = true;
+
+      expect(notified, 1);
+    });
+
+    test('bumps version on register but not on a value change', () {
+      final before = FeatureFlagStore.version.value;
+
+      final flag = FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'k',
+          label: 'K',
+          type: FeatureFlagType.boolean,
+          defaultValue: false,
+        ),
+      );
+      expect(FeatureFlagStore.version.value, greaterThan(before));
+
+      final afterRegister = FeatureFlagStore.version.value;
+      flag.value = true;
+      expect(FeatureFlagStore.version.value, afterRegister);
+    });
+
+    test('asserts that an options flag has a non-empty options list', () {
+      expect(
+        () => FeatureFlag(
+          key: 'k',
+          label: 'K',
+          type: FeatureFlagType.options,
+          defaultValue: 'a',
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+    });
+
+    test('flags is an unmodifiable view', () {
+      FeatureFlagStore.register(
+        FeatureFlag(
+          key: 'k',
+          label: 'K',
+          type: FeatureFlagType.boolean,
+          defaultValue: false,
+        ),
+      );
+
+      expect(
+        () => FeatureFlagStore.flags.add(
+          FeatureFlag(
+            key: 'x',
+            label: 'X',
+            type: FeatureFlagType.boolean,
+            defaultValue: false,
+          ),
         ),
         throwsUnsupportedError,
       );

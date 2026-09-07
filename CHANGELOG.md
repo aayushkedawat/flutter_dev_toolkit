@@ -18,6 +18,7 @@
 - **State inspection beyond Bloc** — `RecordedStateAdapter` lets an app push state changes in from any framework. Riverpod's `ProviderObserver` and Provider's `ChangeNotifier` each wire up in a few lines, documented on the class, without the toolkit taking on those dependencies.
 - **Storage plugin** — view, add, edit and delete `SharedPreferences` entries live from the console, with search and JSON export. Adds `shared_preferences` as a dependency.
 - **FPS/memory history sparklines** in the Performance tab — a rolling ~60-sample window rendered as a small line chart, so a dip that only happens during a scroll, or memory that's climbing rather than flat, is visible as a trend instead of only ever showing an instantaneous snapshot.
+- **Runtime feature flags** — `FeatureFlagStore.register(FeatureFlag(...))` lets an app expose a boolean, string, number, or fixed-options value that can be flipped from the new Flags tab with no rebuild. Each flag carries its own `ValueNotifier`, so the app reacts the same way it would to any other listenable. Re-registering the same key (safe on every `main()`, including hot reload) returns the existing flag instead of resetting it.
 
 ### 🐛 Fixes
 - Fixed a compile error in `PerformanceTab`, which referenced an undefined `FrameTimingCallback` type. The package did not analyze or build before this fix.
