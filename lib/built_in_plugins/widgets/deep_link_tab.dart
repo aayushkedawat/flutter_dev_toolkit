@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import '../../core/dev_console_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
@@ -39,17 +40,17 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.link_off, color: Colors.white24, size: 48),
+                Icon(Icons.link_off, color: palette.faint, size: 48),
                 const SizedBox(height: 12),
-                const Text(
+                Text(
                   'No deep links recorded yet',
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: palette.subtle),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Call DevToolkitDeepLinkObserver.onLinkReceived(uri)\nwhen your app receives a deep link.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white38, fontSize: 12),
+                  style: TextStyle(color: palette.faint, fontSize: 12),
                 ),
               ],
             ),
@@ -85,15 +86,14 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
                     width: 260,
                     child: ListView.separated(
                       separatorBuilder:
-                          (_, _) =>
-                              const Divider(height: 1, color: Colors.white12),
+                          (_, _) => Divider(height: 1, color: palette.divider),
                       itemCount: filtered.length,
                       itemBuilder: (_, i) {
                         final entry = filtered[i];
                         final isSelected = _selected == entry;
                         return ListTile(
                           selected: isSelected,
-                          selectedTileColor: Colors.white10,
+                          selectedTileColor: palette.surface,
                           leading: const Icon(
                             Icons.link,
                             color: Colors.cyanAccent,
@@ -103,18 +103,18 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
                             entry.uri,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white,
+                              color: palette.onSurface,
                             ),
                           ),
                           subtitle: Text(
                             DateFormat(
                               'dd/MM/yy HH:mm:ss',
                             ).format(entry.receivedAt),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 11,
-                              color: Colors.white54,
+                              color: palette.subtle,
                             ),
                           ),
                           onTap: () => setState(() => _selected = entry),
@@ -122,15 +122,15 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
                       },
                     ),
                   ),
-                  const VerticalDivider(width: 1, color: Colors.white12),
+                  VerticalDivider(width: 1, color: palette.divider),
                   // Detail
                   Expanded(
                     child:
                         _selected == null
-                            ? const Center(
+                            ? Center(
                               child: Text(
                                 'Select a link to inspect',
-                                style: TextStyle(color: Colors.white54),
+                                style: TextStyle(color: palette.subtle),
                               ),
                             )
                             : _DeepLinkDetail(entry: _selected!),
@@ -171,7 +171,7 @@ class _DeepLinkDetail extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.copy, size: 16, color: Colors.white54),
+                icon: Icon(Icons.copy, size: 16, color: palette.subtle),
                 tooltip: 'Copy URI',
                 onPressed: () {
                   Clipboard.setData(ClipboardData(text: entry.uri));
@@ -187,7 +187,7 @@ class _DeepLinkDetail extends StatelessWidget {
             title: 'Received',
             child: Text(
               DateFormat('dd MMM yyyy, HH:mm:ss').format(entry.receivedAt),
-              style: const TextStyle(color: Colors.white70),
+              style: TextStyle(color: palette.subtle),
             ),
           ),
           if (entry.source != null) ...[
@@ -196,7 +196,7 @@ class _DeepLinkDetail extends StatelessWidget {
               title: 'Source',
               child: Text(
                 entry.source!,
-                style: const TextStyle(color: Colors.white70),
+                style: TextStyle(color: palette.subtle),
               ),
             ),
           ],
@@ -242,8 +242,8 @@ class _DeepLinkDetail extends StatelessWidget {
             icon: const Icon(Icons.copy_all, size: 16),
             label: const Text('Copy as JSON'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white12,
-              foregroundColor: Colors.white,
+              backgroundColor: palette.divider,
+              foregroundColor: palette.onSurface,
             ),
           ),
         ],
@@ -260,8 +260,8 @@ class _DeepLinkDetail extends StatelessWidget {
           width: 80,
           child: Text(
             key,
-            style: const TextStyle(
-              color: Colors.white54,
+            style: TextStyle(
+              color: palette.subtle,
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -270,7 +270,7 @@ class _DeepLinkDetail extends StatelessWidget {
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(color: Colors.white, fontSize: 12),
+            style: TextStyle(color: palette.onSurface, fontSize: 12),
           ),
         ),
       ],
@@ -291,8 +291,8 @@ class _Section extends StatelessWidget {
       children: [
         Text(
           title.toUpperCase(),
-          style: const TextStyle(
-            color: Colors.white38,
+          style: TextStyle(
+            color: palette.faint,
             fontSize: 10,
             letterSpacing: 1.2,
             fontWeight: FontWeight.bold,

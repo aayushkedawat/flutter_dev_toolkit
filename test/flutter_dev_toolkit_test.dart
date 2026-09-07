@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_dev_toolkit/core/crash_log_store.dart';
 import 'package:flutter_dev_toolkit/core/default_logger.dart';
+import 'package:flutter_dev_toolkit/core/dev_console_theme.dart';
 import 'package:flutter_dev_toolkit/core/dev_toolkit_config.dart';
 import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/core/network_log_store.dart';
@@ -17,7 +18,9 @@ import 'package:flutter_dev_toolkit/interceptors/performance/frame_drop_detector
 import 'package:flutter_dev_toolkit/interceptors/route_interceptor.dart';
 import 'package:flutter_dev_toolkit/models/built_in_plugin_type.dart';
 import 'package:flutter_dev_toolkit/plugins/adapters/bloc_adapter.dart';
+import 'package:flutter_dev_toolkit/plugins/state_inspector/app_state_entry.dart';
 import 'package:flutter_dev_toolkit/plugins/state_inspector/bloc_state_tracker.dart';
+import 'package:flutter_dev_toolkit/plugins/state_inspector/recorded_state_adapter.dart';
 import 'package:flutter_dev_toolkit/models/crash_entry.dart';
 import 'package:flutter_dev_toolkit/models/log_entry.dart';
 import 'package:flutter_dev_toolkit/models/log_tag.dart';
@@ -226,6 +229,34 @@ void main() {
       NetworkLogStore.clear();
 
       expect(NetworkLogStore.logs, isEmpty);
+    });
+
+    test('bumps version on add and clear so the tab can update live', () {
+      final before = NetworkLogStore.version.value;
+
+      NetworkLogStore.add(_log());
+      final afterAdd = NetworkLogStore.version.value;
+      expect(afterAdd, greaterThan(before));
+
+      NetworkLogStore.clear();
+      expect(NetworkLogStore.version.value, greaterThan(afterAdd));
+    });
+  });
+
+  group('NetworkLog.statusGroup', () {
+    test('buckets responses by status class', () {
+      expect(_log(statusCode: 200).statusGroup, 2);
+      expect(_log(statusCode: 204).statusGroup, 2);
+      expect(_log(statusCode: 302).statusGroup, 3);
+      expect(_log(statusCode: 404).statusGroup, 4);
+      expect(_log(statusCode: 503).statusGroup, 5);
+    });
+
+    test('is null when the call never got a usable status', () {
+      expect(_log().statusGroup, isNull);
+      // HttpInterceptor records -1 when the request threw.
+      expect(_log(statusCode: -1, isError: true).statusGroup, isNull);
+      expect(_log(statusCode: 0).statusGroup, isNull);
     });
   });
 
@@ -571,6 +602,114 @@ void main() {
       expect(
         () => FrameDropDetector.jankFrames.add(
           JankFrame(build: Duration.zero, raster: Duration.zero),
+        ),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
+  group('DevConsoleTheme', () {
+    tearDown(
+      () => DevConsoleThemeController.theme.value = DevConsoleTheme.dark,
+    );
+
+    test('resolves a distinct palette and brightness per theme', () {
+      expect(DevConsoleTheme.dark.palette, DevConsolePalette.dark);
+      expect(DevConsoleTheme.light.palette, DevConsolePalette.light);
+      expect(DevConsoleTheme.dark.brightness, Brightness.dark);
+      expect(DevConsoleTheme.light.brightness, Brightness.light);
+    });
+
+    test('builds ThemeData that paints with the palette', () {
+      final theme = DevConsoleTheme.light.themeData;
+
+      expect(theme.scaffoldBackgroundColor, DevConsolePalette.light.background);
+      expect(theme.appBarTheme.backgroundColor, DevConsolePalette.light.appBar);
+    });
+
+    test('toggle() flips between the two themes', () {
+      DevConsoleThemeController.theme.value = DevConsoleTheme.dark;
+
+      DevConsoleThemeController.toggle();
+      expect(DevConsoleThemeController.theme.value, DevConsoleTheme.light);
+      expect(palette, DevConsolePalette.light);
+
+      DevConsoleThemeController.toggle();
+      expect(DevConsoleThemeController.theme.value, DevConsoleTheme.dark);
+      expect(palette, DevConsolePalette.dark);
+    });
+
+    test('init seeds the controller from config.theme', () {
+      FlutterDevToolkit.init(
+        config: DevToolkitConfig(
+          logger: DefaultLogger(),
+          disableBuiltInPlugins: BuiltInPluginType.values,
+          theme: DevConsoleTheme.light,
+        ),
+      );
+
+      expect(DevConsoleThemeController.theme.value, DevConsoleTheme.light);
+    });
+
+    test('defaults to dark', () {
+      expect(
+        DevToolkitConfig(logger: DefaultLogger()).theme,
+        DevConsoleTheme.dark,
+      );
+    });
+  });
+
+  group('RecordedStateAdapter', () {
+    test('records a change with its source and previous value', () {
+      final adapter = RecordedStateAdapter(name: 'Riverpod');
+
+      adapter.record('cartProvider', 3, previous: 2);
+
+      final entry = adapter.entries.single;
+      expect(adapter.name, 'Riverpod');
+      expect(entry.source, 'cartProvider');
+      expect(entry.value, 3);
+      expect(entry.previousState, 2);
+    });
+
+    test('allows a change with no previous value', () {
+      final adapter = RecordedStateAdapter(name: 'Provider');
+
+      adapter.record('CartModel', ['apple']);
+
+      expect(adapter.entries.single.previousState, isNull);
+    });
+
+    test('drops the oldest entry once the cap is reached', () {
+      final adapter = RecordedStateAdapter(name: 'Riverpod', maxEntries: 3);
+
+      for (var i = 0; i < 5; i++) {
+        adapter.record('counter', i);
+      }
+
+      expect(adapter.entries.length, 3);
+      expect(adapter.entries.first.value, 2);
+      expect(adapter.entries.last.value, 4);
+    });
+
+    test('notifies the inspector through revision', () {
+      final adapter = RecordedStateAdapter(name: 'Riverpod');
+      var notifications = 0;
+      adapter.revision!.addListener(() => notifications++);
+
+      adapter.record('counter', 1);
+      adapter.clear();
+
+      expect(notifications, 2);
+      expect(adapter.entries, isEmpty);
+    });
+
+    test('entries is an unmodifiable view', () {
+      final adapter = RecordedStateAdapter(name: 'Riverpod');
+
+      expect(
+        () => adapter.entries.add(
+          AppStateEntry(source: 'x', value: 1, timestamp: DateTime.now()),
         ),
         throwsUnsupportedError,
       );

@@ -27,6 +27,16 @@ class NetworkLog {
     DateTime? startedAt,
   }) : startedAt = startedAt ?? DateTime.now();
 
+  /// The response's status class: 2 for any 2xx, 4 for any 4xx, and so on.
+  ///
+  /// Null when the call never got a usable status — either no response at all,
+  /// or the sentinel [HttpInterceptor] records when the request threw.
+  int? get statusGroup {
+    final code = statusCode;
+    if (code == null || code < 100) return null;
+    return code ~/ 100;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'method': method,

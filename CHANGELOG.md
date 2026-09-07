@@ -9,6 +9,13 @@
 - Draggable floating action button, with a badge showing the session error count.
 - `DevToolkitConfig.enableInRelease` (default `false`) suppresses the overlay in release builds and installs a no-op logger so consumer `logger` calls stay safe in production.
 - `DevToolkitConfig.maxLogEntries` and `DevToolkitConfig.maxNetworkLogs` make retention limits configurable.
+- **cURL export** — `NetworkLog.toCurl()` renders a captured call as a runnable command, with shell-escaped headers and body. Available as "Copy as cURL" on a request's detail page and "Export as cURL" for the whole list.
+- **Startup timing** — the Performance tab reports time from toolkit init to first rendered frame.
+- **Jank frame detail** — recent dropped frames are listed with their build and raster split, not just a counter. `DevToolkitConfig.logFrameDrops` (default `false`) additionally writes each one to the Logs tab.
+- **Light and dark console themes** — `DevToolkitConfig.theme` picks the starting theme and a toggle in the console app bar switches at runtime.
+- **Status filtering in the Network tab** — filter by 2xx/3xx/4xx/5xx or failed, alongside the existing method filter, with a match count.
+- **Tag filtering in the Logs tab** — the filter was already applied when building the list, but there was no UI to select a tag until now.
+- **State inspection beyond Bloc** — `RecordedStateAdapter` lets an app push state changes in from any framework. Riverpod's `ProviderObserver` and Provider's `ChangeNotifier` each wire up in a few lines, documented on the class, without the toolkit taking on those dependencies.
 
 ### 🐛 Fixes
 - Fixed a compile error in `PerformanceTab`, which referenced an undefined `FrameTimingCallback` type. The package did not analyze or build before this fix.
@@ -23,6 +30,12 @@
 - The inspector's selected entry was tracked by list index into a newest-first list, so incoming state changes silently moved the selection to a different entry. It is now tracked by identity.
 - Fixed route stack corruption when the same route appears on the stack twice (A → B → A): exit tracking removed the *first* matching entry, leaving the stack reordered as `[B, A]` and discarding the still-open route's entry time. Durations under a second now report in milliseconds instead of `0s`.
 - The "clear route info" dialog promised to clear the stack, which it never did (and should not — those screens are still open). The copy now matches the behaviour.
+- **`init()` threw when called before `runApp()`.** It touched `WidgetsBinding.instance`, which raises "Binding has not yet been initialized" unless the consumer had already called `ensureInitialized()` — something neither the README snippet nor the example app did. `init()` now calls `WidgetsFlutterBinding.ensureInitialized()` itself.
+- **The Network tab never updated live.** `NetworkLogStore` was the only store without a change notifier, so captured calls appeared only when something else forced a rebuild, such as typing in the search box. The store now notifies and the tab listens.
+- **Any `http` request with a body threw on capture.** `NetworkLog.requestBody` was typed `Map<String, dynamic>?` but `HttpInterceptor` passes `request.body`, a `String`. The field is now `dynamic`, matching what both clients actually hand over.
+- `NetworkLogDetailPage` carried its own copy of the `_parseIfJson(String?)` bug, so exporting a Dio-captured call from the detail page threw.
+- The Performance tab's frame callback re-armed itself unconditionally and so kept requesting frames for the life of the app after the tab was disposed. It now stops on dispose.
+- `ColdStartTimer`, `FrameDropDetector` and `DevConsoleTheme` had shipped since earlier versions as unreachable code — nothing ever called them. All three are now wired up.
 
 ### 📦 Housekeeping
 - Removed the deprecated Actions plugin and tab (fully commented out since 1.3.0) and its stale screenshot.

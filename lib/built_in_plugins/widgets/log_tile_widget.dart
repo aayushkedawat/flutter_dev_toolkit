@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/dev_console_theme.dart';
 
 class LogTileWidget extends StatelessWidget {
   const LogTileWidget({
@@ -36,7 +37,7 @@ class LogTileWidget extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(color: titleColor ?? Colors.white),
+                      style: TextStyle(color: titleColor ?? palette.onSurface),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 2,
                     ),

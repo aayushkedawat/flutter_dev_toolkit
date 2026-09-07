@@ -64,6 +64,9 @@ flutter_dev_toolkit/
 ```dart
 FlutterDevToolkit.init(config: DevToolkitConfig(...));
 // → returns early with a no-op logger if kReleaseMode && !config.enableInRelease
+// → calls WidgetsFlutterBinding.ensureInitialized(), since init() normally
+//   runs before runApp() and everything below needs the binding
+// → starts ColdStartTimer (stops on the first post-frame callback)
 // → installs the config's logger and applies retention caps
 //   (config.maxLogEntries → DefaultLogger, config.maxNetworkLogs → NetworkLogStore)
 // → installs FlutterError.onError / PlatformDispatcher.onError crash hooks
@@ -99,10 +102,14 @@ Every plugin extends `DevToolkitPlugin` and can override:
 | File | Purpose |
 |------|---------|
 | `lib/flutter_dev_toolkit.dart` | Entry point; `init()`, `registerPlugin()`, plugin list, crash hooks |
-| `lib/core/dev_toolkit_config.dart` | `DevToolkitConfig` — plugin opt-outs, release gating, retention caps |
+| `lib/core/dev_toolkit_config.dart` | `DevToolkitConfig` — plugin opt-outs, release gating, retention caps, theme |
+| `lib/core/dev_console_theme.dart` | `DevConsoleTheme`, `DevConsolePalette`, and the `palette` shorthand console widgets paint with |
 | `lib/core/dev_toolkit_plugin.dart` | Abstract `DevToolkitPlugin` base class |
 | `lib/core/default_logger.dart` | Log buffer; cap from the constructor, else `config.maxLogEntries` (default 2000) |
 | `lib/core/network_log_store.dart` | Network log buffer; cap from `config.maxNetworkLogs` (default 500) |
+| `lib/interceptors/performance/cold_start_timer.dart` | Times toolkit init → first frame; started by `init()` |
+| `lib/interceptors/performance/frame_drop_detector.dart` | The single jank source; the Performance tab reads it |
+| `lib/plugins/state_inspector/recorded_state_adapter.dart` | `RecordedStateAdapter` for pushing in Riverpod/Provider/etc. state |
 | `lib/core/crash_log_store.dart` | Crash buffer, hard-capped at 200 entries |
 | `lib/core/deep_link_store.dart` | Deep link buffer, hard-capped at 200 entries |
 | `lib/interceptors/route_interceptor.dart` | NavigatorObserver tracking stack and history with durations |
@@ -238,6 +245,9 @@ When adding a custom plugin (consumer-facing):
 - **`flutter analyze` must be clean** — `analysis_options.yaml` enables `flutter_lints`, and the analyzer treats `info`-level lints as failures in CI.
 - **Platform channels** are not used directly; all platform access goes through `device_info_plus`.
 - **Crash hooks are global.** `init()` replaces `FlutterError.onError` and `PlatformDispatcher.onError`, chaining to whatever was there. Anything installed after `init()` must chain too.
+- **Every store needs a change notifier.** Tabs render from static stores, so a store without a `ValueNotifier` leaves its tab frozen until something else forces a rebuild. `NetworkLogStore` shipped that way and the Network tab did not update live.
+- **Console widgets paint with `palette`, not hardcoded `Colors.white*`.** The top-level `palette` getter in `dev_console_theme.dart` resolves the active theme; using literal colors breaks light mode. Note that a `palette.x` lookup is not a constant, so the enclosing widget cannot be `const`.
+- **Do not add state-management dependencies** (riverpod, provider, …) to observe them. `RecordedStateAdapter` lets consumers push changes in from any framework instead.
 
 ---
 

@@ -15,14 +15,16 @@ Track logs, API calls, navigation, lifecycle events, screen transitions, app sta
 - ✅ Colored logs with filtering and tagging
 - ✅ Network call inspector (supports `http`, `dio`, and `retrofit`)
 - ✅ Route stack and screen duration tracker
+- ✅ Search and filtering — by level and tag in logs, by method and status class in network
 - ✅ Crash reporter — Flutter and unhandled async errors with stack traces
-- ✅ Performance monitor — FPS, memory (RSS) and jank frames
+- ✅ Performance monitor — FPS, memory (RSS), startup time and jank frames
 - ✅ Deep link inspector with query parameter breakdown
 - ✅ Lifecycle event logging
 - ✅ Device info panel
 - ✅ Export logs, network calls (JSON, cURL, HAR 1.2) and route data
 - ✅ Plugin system for adding custom tools
-- ✅ App State Inspector (Bloc support)
+- ✅ App State Inspector (Bloc built in, Riverpod/Provider in a few lines)
+- ✅ Light and dark console themes
 - ✅ Suppressed in release builds by default
 
 ---
@@ -94,6 +96,8 @@ FlutterError.onError = (details) {
 | `enableInRelease` | `false` | Whether the overlay is active in release builds |
 | `maxLogEntries` | `2000` | Log entries retained in memory |
 | `maxNetworkLogs` | `500` | Network calls retained in memory |
+| `logFrameDrops` | `false` | Also write every dropped frame to the Logs tab |
+| `theme` | `DevConsoleTheme.dark` | Console's starting theme; toggleable at runtime |
 
 ### Release builds
 
@@ -207,7 +211,9 @@ GoRouter(
 
 ## 🔍 App State Inspector
 
-Inspect state transitions (Bloc only for now).
+Inspect state transitions, showing each change's previous and current value.
+
+Bloc works out of the box, since the toolkit already depends on `bloc`:
 
 ```dart
 Bloc.observer = DevBlocObserver();
@@ -216,6 +222,55 @@ FlutterDevToolkit.registerPlugin(
   AppStateInspectorPlugin([
     BlocAdapter(),
   ]),
+);
+```
+
+### Other state frameworks
+
+Rather than depend on every state library, the toolkit accepts changes pushed
+in from your app through `RecordedStateAdapter`. Each framework is a few lines.
+
+**Riverpod:**
+
+```dart
+final riverpodInspector = RecordedStateAdapter(name: 'Riverpod');
+
+class DevToolkitProviderObserver extends ProviderObserver {
+  @override
+  void didUpdateProvider(provider, previousValue, newValue, container) {
+    riverpodInspector.record(
+      provider.name ?? provider.runtimeType.toString(),
+      newValue,
+      previous: previousValue,
+    );
+  }
+}
+
+runApp(
+  ProviderScope(
+    observers: [DevToolkitProviderObserver()],
+    child: MyApp(),
+  ),
+);
+```
+
+**Provider / ChangeNotifier:**
+
+```dart
+final providerInspector = RecordedStateAdapter(name: 'Provider');
+
+class CartModel extends ChangeNotifier {
+  CartModel() {
+    addListener(() => providerInspector.record('CartModel', items));
+  }
+}
+```
+
+Then register whichever adapters you use:
+
+```dart
+FlutterDevToolkit.registerPlugin(
+  AppStateInspectorPlugin([BlocAdapter(), riverpodInspector]),
 );
 ```
 

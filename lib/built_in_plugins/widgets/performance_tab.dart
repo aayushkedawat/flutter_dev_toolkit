@@ -1,6 +1,7 @@
 import 'dart:io' show ProcessInfo;
 
 import 'package:flutter/material.dart';
+import '../../core/dev_console_theme.dart';
 import 'package:flutter/scheduler.dart';
 
 import '../../interceptors/performance/cold_start_timer.dart';
@@ -119,10 +120,10 @@ class _PerformanceTabState extends State<PerformanceTab> {
             ),
             const SizedBox(height: 24),
             if (FrameDropDetector.jankFrames.isNotEmpty) ...[
-              const Text(
+              Text(
                 'RECENT JANK FRAMES',
                 style: TextStyle(
-                  color: Colors.white54,
+                  color: palette.subtle,
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1.1,
@@ -138,8 +139,8 @@ class _PerformanceTabState extends State<PerformanceTab> {
               'A jank frame is any frame whose build + raster time exceeds '
               '${FrameDropDetector.budget.inMilliseconds} ms (the threshold '
               'for 60 fps). High jank counts indicate UI thread bottlenecks.',
-              style: const TextStyle(
-                color: Colors.white54,
+              style: TextStyle(
+                color: palette.subtle,
                 fontSize: 12,
                 height: 1.6,
               ),
@@ -195,7 +196,7 @@ class _JankRow extends StatelessWidget {
           Text(
             'build ${frame.build.inMilliseconds} ms · '
             'raster ${frame.raster.inMilliseconds} ms',
-            style: const TextStyle(color: Colors.white38, fontSize: 11),
+            style: TextStyle(color: palette.faint, fontSize: 11),
           ),
         ],
       ),
@@ -223,7 +224,7 @@ class _MetricCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white10,
+        color: palette.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: color.withAlpha(76)),
       ),
@@ -244,8 +245,8 @@ class _MetricCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.white70,
+                  style: TextStyle(
+                    color: palette.subtle,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -261,7 +262,7 @@ class _MetricCard extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(color: Colors.white38, fontSize: 11),
+                  style: TextStyle(color: palette.faint, fontSize: 11),
                 ),
               ],
             ),

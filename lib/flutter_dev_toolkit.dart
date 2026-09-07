@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_dev_toolkit/interceptors/lifecycle_interceptor.dart';
 
 import 'core/crash_log_store.dart';
+import 'core/dev_console_theme.dart';
 import 'core/default_logger.dart';
 import 'core/dev_toolkit_config.dart';
 import 'core/dev_toolkit_plugin.dart';
@@ -64,6 +65,7 @@ class FlutterDevToolkit with WidgetsBindingObserver {
       activeLogger.configure(maxEntries: config.maxLogEntries);
     }
     NetworkLogStore.configure(maxLogs: config.maxNetworkLogs);
+    DevConsoleThemeController.theme.value = config.theme;
 
     logger.log('[DEBUG] Initializing FlutterDevToolkit...');
 
