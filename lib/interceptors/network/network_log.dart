@@ -4,7 +4,11 @@ class NetworkLog {
   final String method;
   final String url;
   final Map<String, dynamic>? requestHeaders;
-  final Map<String, dynamic>? requestBody;
+
+  /// The outgoing body, in whatever shape the client handed over: Dio gives a
+  /// Map, a List or FormData, while the http client gives an encoded String.
+  /// Typing this as a Map made any http request with a body throw.
+  final dynamic requestBody;
   final int? statusCode;
   final dynamic responseBody;
   final Duration duration;
@@ -35,6 +39,38 @@ class NetworkLog {
       'isError': isError,
     };
   }
+
+  /// Renders this call as a runnable `curl` command.
+  ///
+  /// Header values and the body are single-quote escaped, so the output can be
+  /// pasted into a POSIX shell as-is.
+  String toCurl() {
+    final parts = <String>['curl'];
+
+    if (method.toUpperCase() != 'GET') {
+      parts.add('-X ${method.toUpperCase()}');
+    }
+
+    requestHeaders?.forEach((key, value) {
+      parts.add("-H '${_shellEscape('$key: $value')}'");
+    });
+
+    if (requestBody != null) {
+      final body =
+          requestBody is String
+              ? requestBody as String
+              : json.encode(requestBody);
+      parts.add("--data '${_shellEscape(body)}'");
+    }
+
+    parts.add("'${_shellEscape(url)}'");
+
+    return parts.join(' ');
+  }
+
+  /// Ends the quoted run, adds an escaped quote, and reopens it — the standard
+  /// way to get a literal `'` inside a single-quoted shell string.
+  static String _shellEscape(String value) => value.replaceAll("'", r"'\''");
 
   /// Serializes this log as an HAR (HTTP Archive 1.2) entry map.
   /// Pass a list of these to [NetworkLog.toHarDocument] to get a full HAR file.

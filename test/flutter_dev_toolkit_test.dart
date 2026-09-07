@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:flutter_dev_toolkit/core/crash_log_store.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/core/network_log_store.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/network_log.dart';
+import 'package:flutter_dev_toolkit/interceptors/performance/frame_drop_detector.dart';
 import 'package:flutter_dev_toolkit/interceptors/route_interceptor.dart';
 import 'package:flutter_dev_toolkit/models/built_in_plugin_type.dart';
 import 'package:flutter_dev_toolkit/plugins/adapters/bloc_adapter.dart';
@@ -321,6 +323,44 @@ void main() {
     });
   });
 
+  group('NetworkLog cURL export', () {
+    test('renders a bare GET without an explicit method', () {
+      final curl = _log(url: 'https://api.example.test/items').toCurl();
+
+      expect(curl, "curl 'https://api.example.test/items'");
+    });
+
+    test('includes the method, headers and a JSON body', () {
+      final curl =
+          _log(
+            method: 'POST',
+            url: 'https://api.example.test/items',
+            requestHeaders: {'Content-Type': 'application/json'},
+            requestBody: {'name': 'widget'},
+          ).toCurl();
+
+      expect(curl, contains('-X POST'));
+      expect(curl, contains("-H 'Content-Type: application/json'"));
+      expect(curl, contains(RegExp(r'--data .\{"name":"widget"\}')));
+      expect(curl, endsWith("'https://api.example.test/items'"));
+    });
+
+    test('passes a String body through without re-encoding it', () {
+      // The http client hands over an already-encoded body. Typing the field
+      // as a Map made this throw before it ever reached here.
+      final curl =
+          _log(method: 'POST', requestBody: 'name=widget&qty=2').toCurl();
+
+      expect(curl, contains("--data 'name=widget&qty=2'"));
+    });
+
+    test('escapes single quotes so the command stays runnable', () {
+      final curl = _log(method: 'POST', requestBody: "it's fine").toCurl();
+
+      expect(curl, contains(r"--data 'it'\''s fine'"));
+    });
+  });
+
   group('NetworkLog HAR export', () {
     test('maps request metadata onto the HAR entry', () {
       final log = _log(
@@ -480,6 +520,63 @@ void main() {
     });
   });
 
+  group('FrameDropDetector', () {
+    setUp(FrameDropDetector.clear);
+    tearDown(FrameDropDetector.clear);
+
+    test('counts every frame but only flags those over budget', () {
+      FrameDropDetector.recordForTest([
+        _timing(buildMs: 4, rasterMs: 5), // 9ms  — within budget
+        _timing(buildMs: 12, rasterMs: 9), // 21ms — jank
+        _timing(buildMs: 2, rasterMs: 2), // 4ms  — within budget
+      ]);
+
+      expect(FrameDropDetector.totalFrames, 3);
+      expect(FrameDropDetector.jankFrameCount, 1);
+      expect(FrameDropDetector.jankFrames.single.total.inMilliseconds, 21);
+    });
+
+    test('treats a frame exactly at budget as acceptable', () {
+      FrameDropDetector.recordForTest([_timing(buildMs: 8, rasterMs: 8)]);
+
+      expect(FrameDropDetector.jankFrameCount, 0);
+    });
+
+    test('retains a bounded window of jank frames but keeps counting', () {
+      for (var i = 0; i < FrameDropDetector.maxRetained + 10; i++) {
+        FrameDropDetector.recordForTest([_timing(buildMs: 20, rasterMs: 1)]);
+      }
+
+      expect(
+        FrameDropDetector.jankFrames.length,
+        FrameDropDetector.maxRetained,
+      );
+      expect(
+        FrameDropDetector.jankFrameCount,
+        FrameDropDetector.maxRetained + 10,
+      );
+    });
+
+    test('bumps version only when jank is recorded', () {
+      final before = FrameDropDetector.version.value;
+
+      FrameDropDetector.recordForTest([_timing(buildMs: 1, rasterMs: 1)]);
+      expect(FrameDropDetector.version.value, before);
+
+      FrameDropDetector.recordForTest([_timing(buildMs: 30, rasterMs: 1)]);
+      expect(FrameDropDetector.version.value, greaterThan(before));
+    });
+
+    test('jankFrames is an unmodifiable view', () {
+      expect(
+        () => FrameDropDetector.jankFrames.add(
+          JankFrame(build: Duration.zero, raster: Duration.zero),
+        ),
+        throwsUnsupportedError,
+      );
+    });
+  });
+
   group('RouteInterceptor.clear', () {
     late RouteInterceptor observer;
 
@@ -561,11 +658,28 @@ PageRoute<void> _route(String name) => MaterialPageRoute<void>(
   settings: RouteSettings(name: name),
 );
 
+/// FrameTiming takes microsecond timestamps; this builds one with the given
+/// build and raster spans laid end to end.
+FrameTiming _timing({required int buildMs, required int rasterMs}) {
+  const vsync = 0;
+  final buildFinish = buildMs * 1000;
+  final rasterFinish = buildFinish + rasterMs * 1000;
+
+  return FrameTiming(
+    vsyncStart: vsync,
+    buildStart: vsync,
+    buildFinish: buildFinish,
+    rasterStart: buildFinish,
+    rasterFinish: rasterFinish,
+    rasterFinishWallTime: rasterFinish,
+  );
+}
+
 NetworkLog _log({
   String method = 'GET',
   String url = 'https://example.test/resource',
   Map<String, dynamic>? requestHeaders,
-  Map<String, dynamic>? requestBody,
+  dynamic requestBody,
   int? statusCode,
   dynamic responseBody,
   Duration duration = const Duration(milliseconds: 10),

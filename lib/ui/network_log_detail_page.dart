@@ -20,6 +20,16 @@ class NetworkLogDetailPage extends StatelessWidget {
         backgroundColor: log.isError ? Colors.red : Colors.green,
         actions: [
           IconButton(
+            icon: const Icon(Icons.terminal),
+            tooltip: 'Copy as cURL',
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: log.toCurl()));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('cURL copied to clipboard')),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.share),
             tooltip: 'Export Log',
             onPressed: () {
@@ -69,8 +79,10 @@ class NetworkLogDetailPage extends StatelessWidget {
     }
   }
 
-  dynamic _parseIfJson(String? input) {
-    if (input == null) return null;
+  // Dio hands back already-decoded Maps and Lists, so this must not assume a
+  // String — the same assumption used to make exporting a Dio call throw.
+  dynamic _parseIfJson(dynamic input) {
+    if (input is! String) return input;
 
     try {
       return json.decode(input);

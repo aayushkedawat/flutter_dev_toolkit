@@ -4,6 +4,7 @@ import '../core/dev_toolkit_config.dart';
 
 import '../flutter_dev_toolkit.dart';
 import 'network_interceptor.dart';
+import 'performance/frame_drop_detector.dart';
 import 'route_interceptor.dart';
 
 class InterceptorRegistry {
@@ -18,6 +19,12 @@ class InterceptorRegistry {
       BuiltInPluginType.network,
     )) {
       NetworkInterceptor.init();
+    }
+
+    if (!FlutterDevToolkit.config.disableBuiltInPlugins.contains(
+      BuiltInPluginType.performance,
+    )) {
+      FrameDropDetector.init();
     }
   }
 }

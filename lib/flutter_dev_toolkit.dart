@@ -10,6 +10,7 @@ import 'core/logger_interface.dart';
 import 'core/network_log_store.dart';
 import 'core/plugin_registry.dart';
 import 'interceptors/interceptor_registry.dart';
+import 'interceptors/performance/cold_start_timer.dart';
 import 'models/crash_entry.dart';
 import 'models/log_entry.dart';
 import 'models/log_tag.dart';
@@ -47,6 +48,12 @@ class FlutterDevToolkit with WidgetsBindingObserver {
       logger = _NoOpLogger();
       return;
     }
+
+    // init() is normally called before runApp(), so the binding may not exist
+    // yet. Everything below touches WidgetsBinding.instance, which throws
+    // until this runs. It is idempotent.
+    WidgetsFlutterBinding.ensureInitialized();
+    ColdStartTimer.start();
 
     _enabled = true;
     logger = config.logger;
