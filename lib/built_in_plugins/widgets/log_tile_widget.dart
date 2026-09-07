@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/dev_console_theme.dart';
 
 class LogTileWidget extends StatelessWidget {
   const LogTileWidget({
@@ -18,38 +19,36 @@ class LogTileWidget extends StatelessWidget {
   final VoidCallback? onTap;
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                if (prefix != null) prefix!,
-                SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(color: titleColor ?? Colors.white),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 2,
-                      ),
-                      if (subTitle != null) Text(subTitle!),
-                    ],
-                  ),
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              if (prefix != null) prefix!,
+              SizedBox(width: 8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(color: titleColor ?? palette.onSurface),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                    ),
+                    if (subTitle != null) Text(subTitle!),
+                  ],
                 ),
-                if (suffix != null) suffix!,
-              ],
-            ),
-          ],
-        ),
+              ),
+              if (suffix != null) suffix!,
+            ],
+          ),
+        ],
       ),
     );
   }

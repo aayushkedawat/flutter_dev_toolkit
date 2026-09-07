@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../core/crash_log_store.dart';
 import '../core/default_logger.dart';
 import '../flutter_dev_toolkit.dart';
 import 'log_console.dart';
@@ -73,13 +72,14 @@ class _BadgedFab extends StatelessWidget {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
       valueListenable: DefaultLogger.errorCount,
-      builder: (_, errorCount, __) {
+      builder: (_, errorCount, _) {
         return Stack(
           clipBehavior: Clip.none,
           children: [
             FloatingActionButton(
               heroTag: 'dev_toolkit_fab',
-              backgroundColor: open ? Colors.red.shade700 : Colors.blueGrey.shade800,
+              backgroundColor:
+                  open ? Colors.red.shade700 : Colors.blueGrey.shade800,
               onPressed: onTap,
               child: Icon(
                 open ? Icons.close : Icons.bug_report,
@@ -96,7 +96,10 @@ class _BadgedFab extends StatelessWidget {
                     color: Colors.red,
                     shape: BoxShape.circle,
                   ),
-                  constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
                   child: Text(
                     errorCount > 99 ? '99+' : '$errorCount',
                     style: const TextStyle(

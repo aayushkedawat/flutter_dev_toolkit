@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_dev_toolkit/interceptors/lifecycle_interceptor.dart';
 
 import 'core/crash_log_store.dart';
+import 'core/dev_console_theme.dart';
 import 'core/default_logger.dart';
 import 'core/dev_toolkit_config.dart';
 import 'core/dev_toolkit_plugin.dart';
@@ -10,7 +11,10 @@ import 'core/logger_interface.dart';
 import 'core/network_log_store.dart';
 import 'core/plugin_registry.dart';
 import 'interceptors/interceptor_registry.dart';
+import 'interceptors/performance/cold_start_timer.dart';
 import 'models/crash_entry.dart';
+import 'models/log_entry.dart';
+import 'models/log_tag.dart';
 
 class FlutterDevToolkit with WidgetsBindingObserver {
   static late LoggerInterface logger;
@@ -46,11 +50,22 @@ class FlutterDevToolkit with WidgetsBindingObserver {
       return;
     }
 
+    // init() is normally called before runApp(), so the binding may not exist
+    // yet. Everything below touches WidgetsBinding.instance, which throws
+    // until this runs. It is idempotent.
+    WidgetsFlutterBinding.ensureInitialized();
+    ColdStartTimer.start();
+
     _enabled = true;
     logger = config.logger;
 
     // Apply store limits from config
+    final activeLogger = logger;
+    if (activeLogger is DefaultLogger) {
+      activeLogger.configure(maxEntries: config.maxLogEntries);
+    }
     NetworkLogStore.configure(maxLogs: config.maxNetworkLogs);
+    DevConsoleThemeController.theme.value = config.theme;
 
     logger.log('[DEBUG] Initializing FlutterDevToolkit...');
 
@@ -100,10 +115,7 @@ class FlutterDevToolkit with WidgetsBindingObserver {
         ),
       );
       if (logger is DefaultLogger) {
-        (logger as DefaultLogger).log(
-          '[FATAL] $error',
-          level: LogLevel.error,
-        );
+        (logger as DefaultLogger).log('[FATAL] $error', level: LogLevel.error);
       }
       return false; // let the error propagate normally
     };
@@ -145,9 +157,15 @@ class FlutterDevToolkit with WidgetsBindingObserver {
 /// Silent logger used when the toolkit is disabled in release mode.
 class _NoOpLogger implements LoggerInterface {
   @override
-  void log(String message, {LogLevel level = LogLevel.debug, Set tags = const {}}) {}
+  void log(
+    String message, {
+    LogLevel level = LogLevel.debug,
+    Set<LogTag> tags = const {},
+  }) {}
+
   @override
-  List get logEntries => const [];
+  List<LogEntry> get logEntries => const [];
+
   @override
   void clear() {}
 }

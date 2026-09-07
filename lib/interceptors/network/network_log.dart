@@ -4,7 +4,11 @@ class NetworkLog {
   final String method;
   final String url;
   final Map<String, dynamic>? requestHeaders;
-  final Map<String, dynamic>? requestBody;
+
+  /// The outgoing body, in whatever shape the client handed over: Dio gives a
+  /// Map, a List or FormData, while the http client gives an encoded String.
+  /// Typing this as a Map made any http request with a body throw.
+  final dynamic requestBody;
   final int? statusCode;
   final dynamic responseBody;
   final Duration duration;
@@ -23,6 +27,16 @@ class NetworkLog {
     DateTime? startedAt,
   }) : startedAt = startedAt ?? DateTime.now();
 
+  /// The response's status class: 2 for any 2xx, 4 for any 4xx, and so on.
+  ///
+  /// Null when the call never got a usable status — either no response at all,
+  /// or the sentinel [HttpInterceptor] records when the request threw.
+  int? get statusGroup {
+    final code = statusCode;
+    if (code == null || code < 100) return null;
+    return code ~/ 100;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'method': method,
@@ -35,6 +49,38 @@ class NetworkLog {
       'isError': isError,
     };
   }
+
+  /// Renders this call as a runnable `curl` command.
+  ///
+  /// Header values and the body are single-quote escaped, so the output can be
+  /// pasted into a POSIX shell as-is.
+  String toCurl() {
+    final parts = <String>['curl'];
+
+    if (method.toUpperCase() != 'GET') {
+      parts.add('-X ${method.toUpperCase()}');
+    }
+
+    requestHeaders?.forEach((key, value) {
+      parts.add("-H '${_shellEscape('$key: $value')}'");
+    });
+
+    if (requestBody != null) {
+      final body =
+          requestBody is String
+              ? requestBody as String
+              : json.encode(requestBody);
+      parts.add("--data '${_shellEscape(body)}'");
+    }
+
+    parts.add("'${_shellEscape(url)}'");
+
+    return parts.join(' ');
+  }
+
+  /// Ends the quoted run, adds an escaped quote, and reopens it — the standard
+  /// way to get a literal `'` inside a single-quoted shell string.
+  static String _shellEscape(String value) => value.replaceAll("'", r"'\''");
 
   /// Serializes this log as an HAR (HTTP Archive 1.2) entry map.
   /// Pass a list of these to [NetworkLog.toHarDocument] to get a full HAR file.
@@ -80,9 +126,7 @@ class NetworkLog {
           'size': -1,
           'mimeType': 'application/json',
           'text':
-              responseBody is String
-                  ? responseBody
-                  : json.encode(responseBody),
+              responseBody is String ? responseBody : json.encode(responseBody),
         },
         'redirectURL': '',
         'headersSize': -1,
@@ -105,8 +149,11 @@ class NetworkLog {
     return const JsonEncoder.withIndent('  ').convert(har);
   }
 
-  dynamic _parseIfJson(String? input) {
-    if (input == null) return null;
+  /// Decodes [input] when it is a JSON string, and passes anything else
+  /// through untouched. Dio hands back already-decoded Maps and Lists, so this
+  /// must not assume a String.
+  dynamic _parseIfJson(dynamic input) {
+    if (input is! String) return input;
     try {
       return json.decode(input);
     } catch (_) {
@@ -117,13 +164,24 @@ class NetworkLog {
   String _statusText(int? code) {
     if (code == null) return '';
     const texts = {
-      200: 'OK', 201: 'Created', 204: 'No Content', 301: 'Moved Permanently',
-      302: 'Found', 304: 'Not Modified', 400: 'Bad Request',
-      401: 'Unauthorized', 403: 'Forbidden', 404: 'Not Found',
-      405: 'Method Not Allowed', 408: 'Request Timeout',
-      422: 'Unprocessable Entity', 429: 'Too Many Requests',
-      500: 'Internal Server Error', 502: 'Bad Gateway',
-      503: 'Service Unavailable', 504: 'Gateway Timeout',
+      200: 'OK',
+      201: 'Created',
+      204: 'No Content',
+      301: 'Moved Permanently',
+      302: 'Found',
+      304: 'Not Modified',
+      400: 'Bad Request',
+      401: 'Unauthorized',
+      403: 'Forbidden',
+      404: 'Not Found',
+      405: 'Method Not Allowed',
+      408: 'Request Timeout',
+      422: 'Unprocessable Entity',
+      429: 'Too Many Requests',
+      500: 'Internal Server Error',
+      502: 'Bad Gateway',
+      503: 'Service Unavailable',
+      504: 'Gateway Timeout',
     };
     return texts[code] ?? '';
   }

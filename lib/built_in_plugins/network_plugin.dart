@@ -44,13 +44,12 @@ class NetworkPlugin extends DevToolkitPlugin {
             case _ExportFormat.har:
               final text = NetworkLog.toHarDocument(logs);
               ExportUtil.exportData(text: text, title: 'Network Logs (HAR)');
+            case _ExportFormat.curl:
+              final text = logs.map((e) => e.toCurl()).join('\n\n');
+              ExportUtil.exportData(text: text, title: 'Network Logs (cURL)');
           }
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Exported as ${format == _ExportFormat.har ? "HAR" : "JSON"}',
-              ),
-            ),
+            SnackBar(content: Text('Exported as ${format.label}')),
           );
         },
         itemBuilder:
@@ -62,6 +61,10 @@ class NetworkPlugin extends DevToolkitPlugin {
               PopupMenuItem(
                 value: _ExportFormat.har,
                 child: Text('Export as HAR'),
+              ),
+              PopupMenuItem(
+                value: _ExportFormat.curl,
+                child: Text('Export as cURL'),
               ),
             ],
       ),
@@ -96,4 +99,12 @@ class NetworkPlugin extends DevToolkitPlugin {
   }
 }
 
-enum _ExportFormat { json, har }
+enum _ExportFormat {
+  json('JSON'),
+  har('HAR'),
+  curl('cURL');
+
+  const _ExportFormat(this.label);
+
+  final String label;
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/dev_console_theme.dart';
 
 import '../../core/logger_interface.dart';
 import '../../core/network_log_store.dart';
@@ -15,53 +16,112 @@ class NetworkTab extends StatefulWidget {
   State<NetworkTab> createState() => _NetworkTabState();
 }
 
+/// Status buckets offered alongside the method filter.
+enum _StatusFilter {
+  all('All'),
+  success('2xx'),
+  redirect('3xx'),
+  clientError('4xx'),
+  serverError('5xx'),
+  failed('Failed');
+
+  const _StatusFilter(this.label);
+
+  final String label;
+
+  bool matches(NetworkLog log) => switch (this) {
+    _StatusFilter.all => true,
+    // Never got a usable status: the request threw, or timed out.
+    _StatusFilter.failed => log.statusGroup == null,
+    _StatusFilter.success => log.statusGroup == 2,
+    _StatusFilter.redirect => log.statusGroup == 3,
+    _StatusFilter.clientError => log.statusGroup == 4,
+    _StatusFilter.serverError => log.statusGroup == 5,
+  };
+}
+
 class _NetworkTabState extends State<NetworkTab> {
   String _searchQuery = '';
   String _methodFilter = 'All';
+  _StatusFilter _statusFilter = _StatusFilter.all;
 
   final _methods = ['All', 'GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
 
   @override
   Widget build(BuildContext context) {
+    // Rebuild as calls come in, not only when a filter is touched.
+    return ValueListenableBuilder<int>(
+      valueListenable: NetworkLogStore.version,
+      builder: (context, _, _) => _buildList(),
+    );
+  }
+
+  Widget _buildList() {
+    final query = _searchQuery.toLowerCase();
     final logs =
         NetworkLogStore.logs.reversed.where((log) {
           final matchesMethod =
               _methodFilter == 'All' || log.method == _methodFilter;
           final matchesSearch =
-              log.url.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+              log.url.toLowerCase().contains(query) ||
               (log.statusCode?.toString().contains(_searchQuery) ?? false);
-          return matchesMethod && matchesSearch;
+          return matchesMethod && _statusFilter.matches(log) && matchesSearch;
         }).toList();
 
     return Column(
       children: [
         Padding(
           padding: const EdgeInsets.all(6),
-          child: Row(
+          child: Column(
             children: [
-              DropdownButton<String>(
-                value: _methodFilter,
-                items:
-                    _methods
-                        .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                        .toList(),
-                onChanged:
-                    (val) => setState(() => _methodFilter = val ?? 'All'),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  style: TextStyle(color: Colors.black),
-                  decoration: const InputDecoration(
-                    hintText: 'Search URL or status...',
-                    isDense: true,
-                    filled: true,
-                    fillColor: Colors.white,
-
-                    border: OutlineInputBorder(),
+              Row(
+                children: [
+                  DropdownButton<String>(
+                    value: _methodFilter,
+                    items:
+                        _methods
+                            .map(
+                              (m) => DropdownMenuItem(value: m, child: Text(m)),
+                            )
+                            .toList(),
+                    onChanged:
+                        (val) => setState(() => _methodFilter = val ?? 'All'),
                   ),
-                  onChanged: (val) => setState(() => _searchQuery = val),
+                  const SizedBox(width: 12),
+                  DropdownButton<_StatusFilter>(
+                    value: _statusFilter,
+                    items:
+                        _StatusFilter.values
+                            .map(
+                              (s) => DropdownMenuItem(
+                                value: s,
+                                child: Text(s.label),
+                              ),
+                            )
+                            .toList(),
+                    onChanged:
+                        (val) => setState(
+                          () => _statusFilter = val ?? _StatusFilter.all,
+                        ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '${logs.length} of ${NetworkLogStore.logs.length}',
+                    style: TextStyle(color: palette.subtle, fontSize: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                style: const TextStyle(color: Colors.black),
+                decoration: const InputDecoration(
+                  hintText: 'Search URL or status...',
+                  isDense: true,
+                  filled: true,
+                  fillColor: Colors.white,
+                  border: OutlineInputBorder(),
                 ),
+                onChanged: (val) => setState(() => _searchQuery = val),
               ),
             ],
           ),
@@ -74,13 +134,14 @@ class _NetworkTabState extends State<NetworkTab> {
               final log = logs[index];
 
               final ms = log.duration.inMilliseconds;
-              final speedColor = log.isError
-                  ? Colors.red
-                  : ms < 200
+              final speedColor =
+                  log.isError
+                      ? Colors.red
+                      : ms < 200
                       ? Colors.green
                       : ms < 1000
-                          ? Colors.orange
-                          : Colors.red;
+                      ? Colors.orange
+                      : Colors.red;
 
               return Container(
                 margin: const EdgeInsets.symmetric(vertical: 4),

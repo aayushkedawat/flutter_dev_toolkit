@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/dev_console_theme.dart';
 import 'package:flutter_dev_toolkit/built_in_plugins/widgets/log_tile_widget.dart';
 import 'package:flutter_dev_toolkit/core/default_logger.dart';
 import 'package:intl/intl.dart';
@@ -22,7 +23,7 @@ class _LogsTabState extends State<LogsTab> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder(
       valueListenable: DefaultLogger.logVersion,
-      builder: (context, _, __) {
+      builder: (context, _, _) {
         final logs =
             FlutterDevToolkit.logger.logEntries
                 .where((log) {
@@ -77,6 +78,49 @@ class _LogsTabState extends State<LogsTab> {
                 ],
               ),
             ),
+            // Tag filtering was already applied when building the list, but
+            // until now there was no way to actually select a tag.
+            SizedBox(
+              height: 40,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                children: [
+                  for (final tag in LogTag.values)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: FilterChip(
+                        avatar: Icon(
+                          tag.icon,
+                          size: 16,
+                          color:
+                              _selectedTags.contains(tag)
+                                  ? Colors.white
+                                  : tag.color,
+                        ),
+                        label: Text(tag.name),
+                        selected: _selectedTags.contains(tag),
+                        selectedColor: tag.color,
+                        onSelected:
+                            (selected) => setState(() {
+                              if (selected) {
+                                _selectedTags.add(tag);
+                              } else {
+                                _selectedTags.remove(tag);
+                              }
+                            }),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  Center(
+                    child: Text(
+                      '${logs.length} shown',
+                      style: TextStyle(color: palette.subtle, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             Expanded(
               child: ListView.separated(
                 separatorBuilder: (context, index) => Divider(),
@@ -85,7 +129,7 @@ class _LogsTabState extends State<LogsTab> {
                 itemBuilder: (context, index) {
                   final log = logs[index];
                   final color = switch (log.level) {
-                    LogLevel.debug => Colors.white,
+                    LogLevel.debug => palette.onSurface,
                     LogLevel.info => Colors.blue,
                     LogLevel.warning => Colors.orange,
                     LogLevel.error => Colors.red,

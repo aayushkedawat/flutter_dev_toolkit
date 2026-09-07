@@ -5,15 +5,13 @@ class DeepLinkEntry {
   final DateTime receivedAt;
   final String? source;
 
-  DeepLinkEntry({
-    required this.uri,
-    DateTime? receivedAt,
-    this.source,
-  })  : receivedAt = receivedAt ?? DateTime.now(),
-        queryParams = Uri.tryParse(uri)?.queryParameters ?? const {},
-        pathFragment = Uri.tryParse(uri)?.fragment.isNotEmpty == true
-            ? Uri.tryParse(uri)?.fragment
-            : null;
+  DeepLinkEntry({required this.uri, DateTime? receivedAt, this.source})
+    : receivedAt = receivedAt ?? DateTime.now(),
+      queryParams = Uri.tryParse(uri)?.queryParameters ?? const {},
+      pathFragment =
+          Uri.tryParse(uri)?.fragment.isNotEmpty == true
+              ? Uri.tryParse(uri)?.fragment
+              : null;
 
   Map<String, dynamic> toJson() => {
     'uri': uri,

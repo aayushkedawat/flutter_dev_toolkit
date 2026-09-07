@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
 
 class BlocStateEntry {
   final String blocType;
@@ -11,28 +12,33 @@ class BlocStateEntry {
 }
 
 class DevBlocObserver extends BlocObserver {
+  /// Maximum transitions retained in memory. Oldest entries are dropped first,
+  /// matching the behaviour of the other toolkit stores.
+  static const int maxEntries = 500;
+
   static final List<BlocStateEntry> _entries = [];
+
+  /// Bumped on every recorded change so the inspector can rebuild live.
+  static final ValueNotifier<int> version = ValueNotifier(0);
 
   static List<BlocStateEntry> get entries => List.unmodifiable(_entries);
 
   @override
   void onChange(BlocBase bloc, Change change) {
-    _entries.add(BlocStateEntry(bloc.runtimeType.toString(), change.nextState));
+    _entries.add(
+      BlocStateEntry(
+        bloc.runtimeType.toString(),
+        change.nextState,
+        change.currentState,
+      ),
+    );
+    if (_entries.length > maxEntries) _entries.removeAt(0);
+    version.value++;
     super.onChange(bloc, change);
   }
 
-  @override
-  void onCreate(BlocBase bloc) {
-    super.onCreate(bloc);
-  }
-
-  @override
-  void onClose(BlocBase bloc) {
-    super.onClose(bloc);
-  }
-
-  @override
-  void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
-    super.onError(bloc, error, stackTrace);
+  static void clear() {
+    _entries.clear();
+    version.value++;
   }
 }

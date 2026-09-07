@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dev_toolkit/core/dev_toolkit_config.dart';
-import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/route_interceptor.dart';
 import 'package:flutter_dev_toolkit/core/default_logger.dart';
@@ -23,9 +22,15 @@ void main() {
     ),
   );
 
+  // init() installs its own FlutterError.onError and PlatformDispatcher.onError
+  // handlers that feed the Crashes tab. If you install your own afterwards you
+  // must chain to the previous handler — replacing it outright silently stops
+  // the toolkit from recording crashes.
+  final previousOnError = FlutterError.onError;
   FlutterError.onError = (details) {
-    FlutterDevToolkit.logger
-        .log('Flutter Error: ${details.exception}', level: LogLevel.error);
+    // Your own crash reporting (Crashlytics, Sentry, …) goes here.
+    debugPrint('Flutter Error: ${details.exception}');
+    previousOnError?.call(details);
   };
 
   runApp(const MyApp());

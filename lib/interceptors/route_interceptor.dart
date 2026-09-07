@@ -5,8 +5,11 @@ import '../flutter_dev_toolkit.dart';
 class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
   static final RouteInterceptor _instance = RouteInterceptor._();
 
-  static final Map<String, DateTime> _entryTimestamps = {};
-  static final List<String> _routeStack = [];
+  /// Routes currently on the navigator stack, oldest first. Tracked as records
+  /// rather than a name→time map so that pushing the same route twice (A → B →
+  /// A) keeps two independent entries.
+  static final List<_OpenRoute> _openRoutes = [];
+
   static final List<String> _routeHistory = [];
   static final Map<String, dynamic> routeArguments = {};
   static final ValueNotifier<int> routeVersion = ValueNotifier(0);
@@ -19,10 +22,15 @@ class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
     FlutterDevToolkit.logger.log('RouteInterceptor initialized');
   }
 
-  static List<String> get routeStack => List.unmodifiable(_routeStack);
+  static List<String> get routeStack =>
+      List.unmodifiable(_openRoutes.map((r) => r.name));
+
   static List<String> get routeHistory => List.unmodifiable(_routeHistory);
+
+  /// Entry time per route name. If the same route is on the stack more than
+  /// once, the most recent entry wins.
   static Map<String, DateTime> get entryTimestamps =>
-      Map.unmodifiable(_entryTimestamps);
+      Map.unmodifiable({for (final r in _openRoutes) r.name: r.enteredAt});
 
   void _log(String action, Route<dynamic>? route) {
     final name = route?.settings.name ?? 'Unnamed';
@@ -51,23 +59,30 @@ class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
 
   void _trackEntry(PageRoute route) {
     final name = route.settings.name ?? 'Unnamed';
-    _entryTimestamps[name] = DateTime.now();
-    _routeStack.add(name);
+    _openRoutes.add(_OpenRoute(name, DateTime.now()));
   }
 
   void _trackExit(PageRoute route) {
     final name = route.settings.name ?? 'Unnamed';
-    final entryTime = _entryTimestamps.remove(name);
-    _routeStack.remove(name);
 
-    if (entryTime != null) {
-      final duration = DateTime.now().difference(entryTime);
-      FlutterDevToolkit.logger.log(
-        'Exited $name after ${duration.inSeconds}s',
-        level: LogLevel.debug,
-      );
-    }
+    // Pop the most recent entry for this name. Removing the first match would
+    // reorder the stack when a route appears on it more than once.
+    final index = _openRoutes.lastIndexWhere((r) => r.name == name);
+    if (index == -1) return;
+
+    final entry = _openRoutes.removeAt(index);
+    final duration = DateTime.now().difference(entry.enteredAt);
+    FlutterDevToolkit.logger.log(
+      'Exited $name after ${_formatDuration(duration)}',
+      level: LogLevel.debug,
+    );
   }
+
+  /// Sub-second navigations are common, and reporting them as "0s" hides them.
+  static String _formatDuration(Duration duration) =>
+      duration.inSeconds >= 1
+          ? '${duration.inSeconds}s'
+          : '${duration.inMilliseconds}ms';
 
   @override
   void didPush(Route route, Route? previousRoute) {
@@ -100,12 +115,19 @@ class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
     super.didReplace(newRoute: newRoute, oldRoute: oldRoute);
   }
 
+  /// Clears the recorded history. Routes still on the navigator stack are left
+  /// alone — they are live state, not history, and dropping them would break
+  /// duration tracking for screens the user still has open.
   static void clear() {
-    for (var element in _routeHistory) {
-      _entryTimestamps.remove(element);
-    }
     _routeHistory.clear();
     routeArguments.clear();
     routeVersion.value++;
   }
+}
+
+class _OpenRoute {
+  final String name;
+  final DateTime enteredAt;
+
+  _OpenRoute(this.name, this.enteredAt);
 }

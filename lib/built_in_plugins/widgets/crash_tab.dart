@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import '../../core/dev_console_theme.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
@@ -21,11 +22,11 @@ class _CrashTabState extends State<CrashTab> {
   Widget build(BuildContext context) {
     return ValueListenableBuilder<int>(
       valueListenable: CrashLogStore.version,
-      builder: (context, _, __) {
+      builder: (context, _, _) {
         final entries = CrashLogStore.entries.reversed.toList();
 
         if (entries.isEmpty) {
-          return const Center(
+          return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -33,7 +34,7 @@ class _CrashTabState extends State<CrashTab> {
                 SizedBox(height: 12),
                 Text(
                   'No crashes recorded',
-                  style: TextStyle(color: Colors.white70),
+                  style: TextStyle(color: palette.subtle),
                 ),
               ],
             ),
@@ -46,15 +47,15 @@ class _CrashTabState extends State<CrashTab> {
             SizedBox(
               width: 260,
               child: ListView.separated(
-                separatorBuilder: (_, __) =>
-                    const Divider(height: 1, color: Colors.white12),
+                separatorBuilder:
+                    (_, _) => Divider(height: 1, color: palette.divider),
                 itemCount: entries.length,
                 itemBuilder: (_, index) {
                   final entry = entries[index];
                   final isSelected = _selected == entry;
                   return ListTile(
                     selected: isSelected,
-                    selectedTileColor: Colors.white10,
+                    selectedTileColor: palette.surface,
                     leading: Icon(
                       entry.isFatal
                           ? Icons.dangerous_outlined
@@ -65,32 +66,26 @@ class _CrashTabState extends State<CrashTab> {
                       entry.message,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white,
-                      ),
+                      style: TextStyle(fontSize: 12, color: palette.onSurface),
                     ),
                     subtitle: Text(
                       DateFormat('dd/MM/yy HH:mm:ss').format(entry.timestamp),
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Colors.white54,
-                      ),
+                      style: TextStyle(fontSize: 11, color: palette.subtle),
                     ),
                     onTap: () => setState(() => _selected = entry),
                   );
                 },
               ),
             ),
-            const VerticalDivider(width: 1, color: Colors.white12),
+            VerticalDivider(width: 1, color: palette.divider),
             // Right: detail
             Expanded(
               child:
                   _selected == null
-                      ? const Center(
+                      ? Center(
                         child: Text(
                           'Select a crash to view details',
-                          style: TextStyle(color: Colors.white54),
+                          style: TextStyle(color: palette.subtle),
                         ),
                       )
                       : _CrashDetail(entry: _selected!),
@@ -123,13 +118,13 @@ class _CrashDetail extends StatelessWidget {
                     ? Icons.dangerous_outlined
                     : Icons.warning_amber_outlined,
                 size: 16,
-                color: Colors.white,
+                color: palette.onSurface,
               ),
               const SizedBox(width: 6),
               Text(
                 entry.isFatal ? 'FATAL' : 'ERROR',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: palette.onSurface,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                 ),
@@ -137,15 +132,16 @@ class _CrashDetail extends StatelessWidget {
               const Spacer(),
               Text(
                 DateFormat('dd/MM/yy HH:mm:ss').format(entry.timestamp),
-                style: const TextStyle(color: Colors.white70, fontSize: 11),
+                style: TextStyle(color: palette.subtle, fontSize: 11),
               ),
               const SizedBox(width: 8),
               IconButton(
-                icon: const Icon(Icons.copy, size: 16, color: Colors.white70),
+                icon: Icon(Icons.copy, size: 16, color: palette.subtle),
                 tooltip: 'Copy to clipboard',
                 onPressed: () {
-                  final text = const JsonEncoder.withIndent('  ')
-                      .convert(entry.toJson());
+                  final text = const JsonEncoder.withIndent(
+                    '  ',
+                  ).convert(entry.toJson());
                   Clipboard.setData(ClipboardData(text: text));
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Copied to clipboard')),
@@ -166,17 +162,17 @@ class _CrashDetail extends StatelessWidget {
             ),
           ),
         ),
-        const Divider(height: 1, color: Colors.white12),
+        Divider(height: 1, color: palette.divider),
         // Stack trace
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(12),
             child: SelectableText(
               entry.stackTrace,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 11,
-                color: Colors.white70,
+                color: palette.subtle,
                 height: 1.5,
               ),
             ),
