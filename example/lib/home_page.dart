@@ -4,6 +4,8 @@ import 'package:flutter_dev_toolkit/core/logger_interface.dart';
 import 'package:flutter_dev_toolkit/flutter_dev_toolkit.dart';
 import 'package:flutter_dev_toolkit/interceptors/deep_link_observer.dart';
 import 'package:flutter_dev_toolkit/interceptors/network/dio_interceptor.dart';
+import 'package:flutter_dev_toolkit/interceptors/network/network_mock_rule.dart';
+import 'package:flutter_dev_toolkit/interceptors/network/network_mock_store.dart';
 import 'package:flutter_dev_toolkit/models/log_tag.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -71,6 +73,28 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  /// Adds a mock rule for this exact call, then makes it — the Network tab
+  /// shows the mocked entry (tagged MOCKED) without a real request ever going
+  /// out. Manage rules from the Network tab's own config panel (the tune icon
+  /// in its app bar) to try this on any URL.
+  Future<void> _demoNetworkMocking() async {
+    const url = 'https://jsonplaceholder.typicode.com/posts/1';
+    NetworkMockStore.add(
+      NetworkMockRule(
+        urlContains: '/posts/1',
+        statusCode: 200,
+        responseBody: '{"id": 1, "title": "mocked from the example app"}',
+      ),
+    );
+
+    final dio = Dio();
+    dio.interceptors.add(DioNetworkInterceptor());
+    await dio.get(url);
+    FlutterDevToolkit.logger.log(
+      'Made a mocked request to $url — check the Network tab',
+    );
+  }
+
   Future<void> _writeSamplePreferences() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('onboarding_complete', true);
@@ -129,6 +153,10 @@ class HomePage extends StatelessWidget {
           _DemoButton(
             label: 'Make Failing Request (404)',
             onPressed: _makeFailingRequest,
+          ),
+          _DemoButton(
+            label: 'Add a Mock Rule and Call It',
+            onPressed: _demoNetworkMocking,
           ),
           const _SectionHeader('Crashes'),
           _DemoButton(
