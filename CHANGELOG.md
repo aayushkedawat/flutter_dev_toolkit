@@ -28,6 +28,7 @@
 - `NetworkLog.toJson()` no longer throws a `TypeError` when the response body was already decoded. Dio hands back `Map`s and `List`s, which the JSON/HAR export path assumed were `String`s.
 - `DeviceInfoTab` no longer touches its `BuildContext` across an async gap without a `mounted` guard.
 - Removed an unused import in `log_overlay.dart`.
+- The Deep Links tab no longer forces a fixed-width list/detail split view. Tapping a link now pushes a full-screen detail page, matching the Network tab's pattern — the split layout compacted content unusably on phone-sized overlays.
 - **App State Inspector now updates live.** The tab had no listener on the Bloc observer, so it only refreshed when rebuilt for some other reason — state changes appeared to stop arriving. `AppStateAdapter` gained a `revision` `Listenable` that the inspector rebuilds on.
 - **The Bloc inspector now shows the previous state.** `DevBlocObserver` discarded `change.currentState`, so every entry recorded only the new state despite the UI being presented as a transition view.
 - `DevBlocObserver` retained transitions without any limit — the only unbounded store in the toolkit. It is now capped at 500 entries and exposes `clear()`.
