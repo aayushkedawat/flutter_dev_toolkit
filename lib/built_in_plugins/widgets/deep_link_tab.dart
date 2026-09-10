@@ -18,7 +18,6 @@ class DeepLinkTab extends StatefulWidget {
 }
 
 class _DeepLinkTabState extends State<DeepLinkTab> {
-  DeepLinkEntry? _selected;
   String _search = '';
 
   @override
@@ -73,76 +72,69 @@ class _DeepLinkTabState extends State<DeepLinkTab> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.search, color: Colors.black54),
                 ),
-                onChanged:
-                    (v) => setState(() {
-                      _search = v;
-                      _selected = null;
-                    }),
+                onChanged: (v) => setState(() => _search = v),
               ),
             ),
             Expanded(
-              child: Row(
-                children: [
-                  // List
-                  SizedBox(
-                    width: 260,
-                    child: ListView.separated(
-                      separatorBuilder:
-                          (_, _) => Divider(height: 1, color: palette.divider),
-                      itemCount: filtered.length,
-                      itemBuilder: (_, i) {
-                        final entry = filtered[i];
-                        final isSelected = _selected == entry;
-                        return ListTile(
-                          selected: isSelected,
-                          selectedTileColor: palette.surface,
-                          leading: const Icon(
-                            Icons.link,
-                            color: Colors.cyanAccent,
-                            size: 20,
-                          ),
-                          title: Text(
-                            entry.uri,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: palette.onSurface,
-                            ),
-                          ),
-                          subtitle: Text(
-                            DateFormat(
-                              'dd/MM/yy HH:mm:ss',
-                            ).format(entry.receivedAt),
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: palette.subtle,
-                            ),
-                          ),
-                          onTap: () => setState(() => _selected = entry),
-                        );
-                      },
+              child: ListView.separated(
+                separatorBuilder:
+                    (_, _) => Divider(height: 1, color: palette.divider),
+                itemCount: filtered.length,
+                itemBuilder: (_, i) {
+                  final entry = filtered[i];
+                  return ListTile(
+                    leading: const Icon(
+                      Icons.link,
+                      color: Colors.cyanAccent,
+                      size: 20,
                     ),
-                  ),
-                  VerticalDivider(width: 1, color: palette.divider),
-                  // Detail
-                  Expanded(
-                    child:
-                        _selected == null
-                            ? Center(
-                              child: Text(
-                                'Select a link to inspect',
-                                style: TextStyle(color: palette.subtle),
-                              ),
-                            )
-                            : _DeepLinkDetail(entry: _selected!),
-                  ),
-                ],
+                    title: Text(
+                      entry.uri,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12, color: palette.onSurface),
+                    ),
+                    subtitle: Text(
+                      DateFormat('dd/MM/yy HH:mm:ss').format(entry.receivedAt),
+                      style: TextStyle(fontSize: 11, color: palette.subtle),
+                    ),
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: palette.faint,
+                      size: 18,
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => _DeepLinkDetailPage(entry: entry),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
         );
       },
+    );
+  }
+}
+
+class _DeepLinkDetailPage extends StatelessWidget {
+  final DeepLinkEntry entry;
+
+  const _DeepLinkDetailPage({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: palette.background,
+      appBar: AppBar(
+        title: const Text('Deep Link'),
+        backgroundColor: palette.appBar,
+      ),
+      body: _DeepLinkDetail(entry: entry),
     );
   }
 }
