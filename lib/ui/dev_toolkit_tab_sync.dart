@@ -3,9 +3,15 @@ import '../flutter_dev_toolkit.dart';
 
 /// Keeps the DevToolkit plugin state in sync with the selected tab.
 class DevToolkitTabControllerSync extends StatefulWidget {
+  /// How many tabs precede the plugin tabs in the enclosing `TabBar`. A
+  /// selected index below this count means a non-plugin tab is active.
   final int baseTabCount;
+
+  /// The subtree containing the `DefaultTabController` to observe.
   final Widget child;
 
+  /// Wraps [child], syncing `FlutterDevToolkit`'s active plugin to whichever
+  /// tab past [baseTabCount] is selected.
   const DevToolkitTabControllerSync({
     super.key,
     required this.baseTabCount,

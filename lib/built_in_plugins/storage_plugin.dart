@@ -7,6 +7,8 @@ import '../core/share_utils.dart';
 import '../core/storage_inspector_store.dart';
 import 'widgets/storage_tab.dart';
 
+/// The Storage tab: view, add, edit, and delete `SharedPreferences` entries,
+/// with export and clear-all actions. Backed by [StorageInspectorStore].
 class StoragePlugin extends DevToolkitPlugin {
   @override
   String get name => 'Storage';

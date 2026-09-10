@@ -4,9 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../interceptors/network/network_log.dart';
 
+/// Full-screen detail view for one captured network call: request,
+/// response, and error tabs, with cURL and JSON export actions.
 class NetworkLogDetailPage extends StatelessWidget {
+  /// The call to display.
   final NetworkLog log;
 
+  /// Creates the detail page for [log].
   const NetworkLogDetailPage({super.key, required this.log});
 
   @override

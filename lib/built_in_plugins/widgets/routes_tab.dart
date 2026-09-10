@@ -4,6 +4,8 @@ import 'package:flutter_dev_toolkit/built_in_plugins/widgets/log_tile_widget.dar
 
 import '../../interceptors/route_interceptor.dart';
 
+/// The Routes tab's UI: the current navigator stack and push/pop history,
+/// filterable by route name, with tap-to-copy on each entry.
 class RoutePluginView extends StatefulWidget {
   const RoutePluginView({super.key});
 

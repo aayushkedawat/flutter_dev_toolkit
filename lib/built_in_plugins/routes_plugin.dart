@@ -7,6 +7,8 @@ import '../../flutter_dev_toolkit.dart';
 import '../../interceptors/route_interceptor.dart';
 import 'widgets/routes_tab.dart';
 
+/// The Routes tab: the current navigation stack and history, with export and
+/// clear actions. Backed by [RouteInterceptor].
 class RoutePlugin extends DevToolkitPlugin {
   @override
   String get name => 'Routes';

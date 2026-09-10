@@ -21,6 +21,8 @@ class ColdStartTimer {
   /// Bumped once the measurement lands, so the Performance tab can refresh.
   static final ValueNotifier<int> version = ValueNotifier(0);
 
+  /// Starts timing. A no-op if already running or already measured once
+  /// this session.
   static void start() {
     if (_stopwatch.isRunning || _coldStart != null) return;
 
@@ -44,6 +46,7 @@ class ColdStartTimer {
     );
   }
 
+  /// Clears the measurement so [start] can be called again. Test-only.
   @visibleForTesting
   static void reset() {
     _stopwatch

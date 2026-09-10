@@ -16,28 +16,47 @@ import 'models/crash_entry.dart';
 import 'models/log_entry.dart';
 import 'models/log_tag.dart';
 
+/// The toolkit's entry point and singleton facade: `init()` wires up every
+/// interceptor and built-in plugin, and static members here are how the rest
+/// of the toolkit (and a consumer app) reach the active logger, config, and
+/// plugin list.
 class FlutterDevToolkit with WidgetsBindingObserver {
+  /// Where `FlutterDevToolkit.logger.log(...)` calls go. Set by [init] from
+  /// `DevToolkitConfig.logger` — a no-op logger if the toolkit is disabled in
+  /// release mode.
   static late LoggerInterface logger;
+
+  /// The config passed to [init].
   static late DevToolkitConfig config;
 
   /// False when the toolkit was skipped due to [DevToolkitConfig.enableInRelease]
-  /// being false in a release build. [DevOverlay] checks this before rendering.
+  /// being false in a release build. `DevOverlay` checks this before rendering.
   static bool _enabled = true;
+
+  /// Whether the toolkit is active. False only when skipped in a release
+  /// build per [DevToolkitConfig.enableInRelease].
   static bool get isEnabled => _enabled;
 
   // Plugin storage
   static final List<DevToolkitPlugin> _builtInPlugins = [];
   static final List<DevToolkitPlugin> _customPlugins = [];
 
+  /// The plugin whose tab is currently selected in the console, or `null`
+  /// when the console is closed or on a non-plugin tab.
   static final ValueNotifier<DevToolkitPlugin?> activePluginNotifier =
       ValueNotifier(null);
 
+  /// Shorthand for `activePluginNotifier.value`.
   static DevToolkitPlugin? get activePlugin => activePluginNotifier.value;
 
+  /// Sets [activePlugin], notifying [activePluginNotifier]'s listeners.
   static void setActivePlugin(DevToolkitPlugin? plugin) {
     activePluginNotifier.value = plugin;
   }
 
+  /// Initializes the toolkit: installs the logger, crash hooks, and
+  /// interceptors, then registers every built-in plugin not disabled via
+  /// [config]. Call this once, before `runApp()`.
   static void init({required DevToolkitConfig config}) {
     FlutterDevToolkit.config = config;
 
@@ -121,10 +140,14 @@ class FlutterDevToolkit with WidgetsBindingObserver {
     };
   }
 
+  /// Registers a custom, consumer-defined plugin. Call this after [init],
+  /// since built-in plugins are registered there.
   static void registerPlugin(DevToolkitPlugin plugin) {
     _customPlugins.add(plugin);
   }
 
+  /// Every registered plugin, built-in ones first, in the order the console
+  /// renders their tabs.
   static List<DevToolkitPlugin> get plugins => [
     ..._builtInPlugins,
     ..._customPlugins,
@@ -149,6 +172,9 @@ class FlutterDevToolkit with WidgetsBindingObserver {
     }
   }
 
+  /// Registers a built-in plugin. Called by `PluginRegistry` during [init];
+  /// not meant to be called directly by a consumer app — use [registerPlugin]
+  /// for that.
   static void addBuiltInPlugin(DevToolkitPlugin plugin) {
     _builtInPlugins.add(plugin);
   }

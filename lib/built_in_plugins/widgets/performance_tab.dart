@@ -9,6 +9,8 @@ import '../../interceptors/performance/frame_drop_detector.dart';
 import '../../interceptors/performance/memory_probe.dart';
 import '../../interceptors/performance/performance_history.dart';
 
+/// The Performance tab's UI: live FPS/memory/startup/jank metric cards plus
+/// their rolling history sparklines and a recent-jank-frames list.
 class PerformanceTab extends StatefulWidget {
   const PerformanceTab({super.key});
 
