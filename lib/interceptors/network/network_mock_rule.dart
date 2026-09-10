@@ -5,6 +5,8 @@
 /// the URL, optionally narrowed to one HTTP method — rather than a full
 /// pattern language. The first enabled rule that matches wins.
 class NetworkMockRule {
+  /// Creates a mock rule. Only [urlContains] is required — every other
+  /// field defaults to a plain `200 OK` with an empty body.
   NetworkMockRule({
     required this.urlContains,
     this.method,
@@ -21,11 +23,21 @@ class NetworkMockRule {
   /// Null matches any method.
   final String? method;
 
+  /// Status code the mocked response reports.
   final int statusCode;
+
+  /// Body the mocked response returns.
   final String responseBody;
+
+  /// Artificial delay before the mocked response resolves, simulating
+  /// network latency.
   final Duration delay;
+
+  /// Whether this rule is checked at all. A disabled rule never matches,
+  /// letting the config panel toggle a rule off without deleting it.
   final bool enabled;
 
+  /// Whether this rule applies to a request with [requestMethod] and [url].
   bool matches(String requestMethod, String url) {
     if (!enabled || urlContains.isEmpty) return false;
     if (method != null &&
@@ -35,6 +47,9 @@ class NetworkMockRule {
     return url.toLowerCase().contains(urlContains.toLowerCase());
   }
 
+  /// Returns a copy with the given fields replaced. Pass `method: null`
+  /// explicitly to clear it — omitting it keeps the current value, thanks to
+  /// the internal [_unset] sentinel.
   NetworkMockRule copyWith({
     String? urlContains,
     Object? method = _unset,

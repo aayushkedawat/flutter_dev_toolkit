@@ -1,24 +1,44 @@
 import 'dart:convert';
 
+/// One captured network call, recorded by `HttpInterceptor` or
+/// `DioNetworkInterceptor` and rendered by the Network tab.
 class NetworkLog {
+  /// The HTTP method (`'GET'`, `'POST'`, …).
   final String method;
+
+  /// The request URL, as a string.
   final String url;
+
+  /// The outgoing request's headers, if any were captured.
   final Map<String, dynamic>? requestHeaders;
 
   /// The outgoing body, in whatever shape the client handed over: Dio gives a
   /// Map, a List or FormData, while the http client gives an encoded String.
   /// Typing this as a Map made any http request with a body throw.
   final dynamic requestBody;
+
+  /// The response's HTTP status code, or `null`/negative for a call that
+  /// never got one (e.g. it threw before a response arrived).
   final int? statusCode;
+
+  /// The response body, in whatever shape the client handed over — a
+  /// decoded `Map`/`List` from Dio, or a raw `String` from the http client.
   final dynamic responseBody;
+
+  /// How long the call took, end to end.
   final Duration duration;
+
+  /// True for a non-2xx response or a call that threw.
   final bool isError;
+
+  /// When the call was made. Defaults to [DateTime.now] if omitted.
   final DateTime startedAt;
 
-  /// True when this call was short-circuited by a [NetworkMockRule] instead
-  /// of reaching the network.
+  /// True when this call was short-circuited by a mock rule instead of
+  /// reaching the network.
   final bool isMocked;
 
+  /// Creates a network log entry.
   NetworkLog({
     required this.method,
     required this.url,
@@ -35,13 +55,14 @@ class NetworkLog {
   /// The response's status class: 2 for any 2xx, 4 for any 4xx, and so on.
   ///
   /// Null when the call never got a usable status — either no response at all,
-  /// or the sentinel [HttpInterceptor] records when the request threw.
+  /// or the sentinel `HttpInterceptor` records when the request threw.
   int? get statusGroup {
     final code = statusCode;
     if (code == null || code < 100) return null;
     return code ~/ 100;
   }
 
+  /// Serializes this call for export (e.g. copy-as-JSON in the Network tab).
   Map<String, dynamic> toJson() {
     return {
       'method': method,

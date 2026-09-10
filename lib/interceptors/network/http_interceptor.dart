@@ -7,9 +7,20 @@ import '../../flutter_dev_toolkit.dart';
 import 'network_log.dart';
 import 'network_mock_store.dart';
 
+/// Wraps an `http.Client`, recording every request/response into
+/// [NetworkLogStore] and honoring [NetworkMockStore] rules before a request
+/// reaches the network.
+///
+/// Use it anywhere you'd use a plain `http.Client`:
+///
+/// ```dart
+/// final client = HttpInterceptor();
+/// final response = await client.get(Uri.parse('https://example.com'));
+/// ```
 class HttpInterceptor extends http.BaseClient {
   final http.Client _inner;
 
+  /// Wraps [client], or a new `http.Client()` if omitted.
   HttpInterceptor([http.Client? client]) : _inner = client ?? http.Client();
 
   @override

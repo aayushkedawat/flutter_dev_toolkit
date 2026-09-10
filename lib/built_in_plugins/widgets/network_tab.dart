@@ -9,6 +9,8 @@ import 'package:http/http.dart' as http;
 
 import '../../ui/network_log_detail_page.dart';
 
+/// The Network tab's UI: captured calls with method/status/text filtering,
+/// a details page, and a one-tap replay action.
 class NetworkTab extends StatefulWidget {
   const NetworkTab({super.key});
 

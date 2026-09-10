@@ -6,6 +6,8 @@ import '../core/dev_toolkit_plugin.dart';
 import '../core/share_utils.dart';
 import 'widgets/deep_link_tab.dart';
 
+/// The Deep Links tab: recorded links with URI/query inspection, export, and
+/// clear actions. Backed by [DeepLinkStore].
 class DeepLinkPlugin extends DevToolkitPlugin {
   @override
   String get name => 'Deep Links';

@@ -2,8 +2,16 @@ import '../models/built_in_plugin_type.dart';
 import 'dev_console_theme.dart';
 import 'logger_interface.dart';
 
+/// Configuration passed to `FlutterDevToolkit.init`, controlling which
+/// built-in plugins run, retention limits, and the console's starting look.
 class DevToolkitConfig {
+  /// Where `FlutterDevToolkit.logger.log` calls end up. Pass `DefaultLogger`
+  /// for the built-in in-memory buffer, or a custom [LoggerInterface] to
+  /// forward entries elsewhere (e.g. to a remote log service) as well.
   final LoggerInterface logger;
+
+  /// Built-in plugin types to leave out of the console. Built-in plugins are
+  /// opt-out, so an empty list (the default) registers all of them.
   final List<BuiltInPluginType> disableBuiltInPlugins;
 
   /// Whether the toolkit overlay and plugins should be active in release builds.
@@ -27,6 +35,8 @@ class DevToolkitConfig {
   /// console app bar; this only sets what it opens with.
   final DevConsoleTheme theme;
 
+  /// Creates a config. Only [logger] is required — every other field has a
+  /// default matching the toolkit's out-of-the-box behavior.
   const DevToolkitConfig({
     required this.logger,
     this.disableBuiltInPlugins = const [],

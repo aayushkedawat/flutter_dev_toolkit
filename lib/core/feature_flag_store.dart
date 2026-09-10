@@ -3,7 +3,11 @@ import 'package:flutter/foundation.dart';
 /// How a [FeatureFlag]'s value should be presented and edited in the Flags
 /// tab.
 enum FeatureFlagType {
+  /// Presented as a switch in the Flags tab. Backed by `bool`.
   boolean,
+
+  /// Presented as an editable text field in the Flags tab. Backed by
+  /// `String`.
   string,
 
   /// Backed by `num`, so a value may come back as either `int` or `double`
@@ -35,6 +39,11 @@ enum FeatureFlagType {
 /// );
 /// ```
 class FeatureFlag {
+  /// Creates a flag. [defaultValue]'s runtime type should match [type]
+  /// (`bool` for [FeatureFlagType.boolean], `num` for
+  /// [FeatureFlagType.number], `String` for [FeatureFlagType.string] and
+  /// [FeatureFlagType.options]). [options] is required and must be non-empty
+  /// when [type] is [FeatureFlagType.options].
   FeatureFlag({
     required this.key,
     required this.label,
@@ -57,6 +66,7 @@ class FeatureFlag {
   /// Shown in the Flags tab in place of [key].
   final String label;
 
+  /// How this flag's value is presented and edited in the Flags tab.
   final FeatureFlagType type;
 
   /// Restored by [reset] and by the tab's "reset all" action.
@@ -65,11 +75,17 @@ class FeatureFlag {
   /// Required, and must be non-empty, when [type] is [FeatureFlagType.options].
   final List<Object>? options;
 
+  /// The flag's current value. Listen to this directly to react to changes
+  /// without rebuilding on every other flag's update.
   final ValueNotifier<Object> notifier;
 
+  /// Shorthand for `notifier.value`.
   Object get value => notifier.value;
+
+  /// Shorthand for `notifier.value = v`.
   set value(Object v) => notifier.value = v;
 
+  /// Restores [value] to [defaultValue].
   void reset() => notifier.value = defaultValue;
 }
 
@@ -84,6 +100,7 @@ class FeatureFlagStore {
   /// value change would rebuild the whole list on every keystroke.
   static final ValueNotifier<int> version = ValueNotifier(0);
 
+  /// Every registered flag, in registration order.
   static List<FeatureFlag> get flags => List.unmodifiable(_flags.values);
 
   /// Registers [flag]. If a flag with the same key is already registered, the
@@ -98,14 +115,19 @@ class FeatureFlagStore {
     return flag;
   }
 
+  /// Looks up a registered flag by [key], or `null` if none is registered
+  /// under it.
   static FeatureFlag? get(String key) => _flags[key];
 
+  /// Restores every registered flag to its default value.
   static void resetAll() {
     for (final flag in _flags.values) {
       flag.reset();
     }
   }
 
+  /// Clears every registration. Test-only — an app should never need to
+  /// unregister a flag at runtime.
   @visibleForTesting
   static void clear() {
     _flags.clear();

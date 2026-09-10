@@ -6,19 +6,26 @@ import '../../flutter_dev_toolkit.dart';
 
 /// A single frame that missed the budget.
 class JankFrame {
+  /// Time spent in the build phase.
   final Duration build;
+
+  /// Time spent in the raster phase.
   final Duration raster;
+
+  /// When this frame was recorded. Defaults to [DateTime.now] if omitted.
   final DateTime at;
 
+  /// Creates a jank frame record.
   JankFrame({required this.build, required this.raster, DateTime? at})
     : at = at ?? DateTime.now();
 
+  /// [build] plus [raster] — the frame's total time.
   Duration get total => build + raster;
 }
 
 /// The toolkit's single source of jank data.
 ///
-/// Registered once by [InterceptorRegistry] when the Performance plugin is
+/// Registered once by `InterceptorRegistry` when the Performance plugin is
 /// enabled; the Performance tab reads the counters rather than installing a
 /// second timings callback of its own.
 class FrameDropDetector {
@@ -37,14 +44,17 @@ class FrameDropDetector {
   /// Bumped when a jank frame is recorded, so the Performance tab can refresh.
   static final ValueNotifier<int> version = ValueNotifier(0);
 
+  /// Total frames observed this session, jank or not.
   static int get totalFrames => _totalFrames;
 
   /// Total jank frames seen this session. May exceed [jankFrames] length,
   /// which is capped at [maxRetained].
   static int get jankFrameCount => _jankFrameCount;
 
+  /// The most recent jank frames, oldest first, capped at [maxRetained].
   static List<JankFrame> get jankFrames => List.unmodifiable(_jankFrames);
 
+  /// Starts listening for frame timings. A no-op if already initialized.
   static void init() {
     if (_initialized) return;
     _initialized = true;
@@ -79,6 +89,7 @@ class FrameDropDetector {
     if (recorded) version.value++;
   }
 
+  /// Resets every counter and discards retained jank frames.
   static void clear() {
     _totalFrames = 0;
     _jankFrameCount = 0;
@@ -86,6 +97,8 @@ class FrameDropDetector {
     version.value++;
   }
 
+  /// Feeds [timings] through the same path a real
+  /// `SchedulerBinding.addTimingsCallback` invocation would. Test-only.
   @visibleForTesting
   static void recordForTest(List<FrameTiming> timings) =>
       _onFrameTimings(timings);

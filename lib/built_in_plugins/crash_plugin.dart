@@ -6,6 +6,8 @@ import '../core/dev_toolkit_plugin.dart';
 import '../core/share_utils.dart';
 import 'widgets/crash_tab.dart';
 
+/// The Crashes tab: captured Flutter and async errors, with export and
+/// clear actions. Backed by [CrashLogStore].
 class CrashPlugin extends DevToolkitPlugin {
   @override
   String get name => 'Crashes';
