@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import '../../core/deep_link_store.dart';
 import '../../models/deep_link_entry.dart';
 
+/// The Deep Links tab's UI: recorded links with a search filter and a
+/// detail view for the selected one.
 class DeepLinkTab extends StatefulWidget {
   const DeepLinkTab({super.key});
 

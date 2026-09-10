@@ -5,9 +5,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 /// returned for the key: `bool`, `int`, `double`, `String`, or
 /// `List<String>`.
 class StorageEntry {
+  /// The `SharedPreferences` key.
   final String key;
+
+  /// The stored value, or `null` if the key holds no value.
   final Object? value;
 
+  /// Creates a storage entry.
   const StorageEntry({required this.key, required this.value});
 }
 
@@ -23,11 +27,17 @@ class StorageInspectorStore {
   static List<StorageEntry> _entries = [];
   static bool _loaded = false;
 
+  /// Bumped on every [refresh], [setValue], [remove], and [clearAll] so the
+  /// Storage tab can rebuild.
   static final ValueNotifier<int> version = ValueNotifier(0);
 
+  /// The last-loaded snapshot, sorted by key.
   static List<StorageEntry> get entries => List.unmodifiable(_entries);
+
+  /// Whether [refresh] has been called at least once.
   static bool get isLoaded => _loaded;
 
+  /// Reloads [entries] from `SharedPreferences`.
   static Future<void> refresh() async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys().toList()..sort();
@@ -62,12 +72,14 @@ class StorageInspectorStore {
     await refresh();
   }
 
+  /// Deletes [key], then refreshes [entries].
   static Future<void> remove(String key) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(key);
     await refresh();
   }
 
+  /// Deletes every `SharedPreferences` entry, then refreshes [entries].
   static Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();

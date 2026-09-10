@@ -8,6 +8,8 @@ import 'package:share_plus/share_plus.dart';
 import '../core/dev_toolkit_plugin.dart';
 import '../flutter_dev_toolkit.dart';
 
+/// The Device Info tab: platform, OS, and hardware details from
+/// `device_info_plus`, with a share action. Backed by [DeviceInfoLogStore].
 class UserDeviceInfoPlugin extends DevToolkitPlugin {
   @override
   String get name => 'Device Info';

@@ -8,6 +8,8 @@ import 'package:intl/intl.dart';
 import '../../core/crash_log_store.dart';
 import '../../models/crash_entry.dart';
 
+/// The Crashes tab's UI: a list of captured errors with a detail view for
+/// the selected one.
 class CrashTab extends StatefulWidget {
   const CrashTab({super.key});
 

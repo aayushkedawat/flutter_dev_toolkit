@@ -7,6 +7,8 @@ import '../../../core/logger_interface.dart';
 import '../../../flutter_dev_toolkit.dart';
 import '../../models/log_tag.dart';
 
+/// The Logs tab's UI: entries from `FlutterDevToolkit.logger`, filterable by
+/// level, tag, and free-text search.
 class LogsTab extends StatefulWidget {
   const LogsTab({super.key});
 

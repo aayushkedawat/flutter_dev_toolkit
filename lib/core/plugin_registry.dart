@@ -12,7 +12,12 @@ import '../built_in_plugins/network_plugin.dart';
 import '../models/built_in_plugin_type.dart';
 import 'dev_toolkit_plugin.dart';
 
+/// Registers every built-in plugin not listed in
+/// `DevToolkitConfig.disableBuiltInPlugins`.
 class PluginRegistry {
+  /// Called once by `FlutterDevToolkit.init`. Adding a new built-in plugin
+  /// means adding a `tryAdd` call here, gated on its own
+  /// [BuiltInPluginType].
   static void registerBuiltInPlugins() {
     final disabled = FlutterDevToolkit.config.disableBuiltInPlugins;
 

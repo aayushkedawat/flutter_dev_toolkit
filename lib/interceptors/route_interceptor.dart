@@ -2,6 +2,9 @@ import 'package:flutter/widgets.dart';
 import '../core/logger_interface.dart';
 import '../flutter_dev_toolkit.dart';
 
+/// Tracks navigation history and the current route stack, feeding the
+/// Routes tab. Register [instance] as a `MaterialApp.navigatorObservers`
+/// entry.
 class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
   static final RouteInterceptor _instance = RouteInterceptor._();
 
@@ -11,20 +14,34 @@ class RouteInterceptor extends RouteObserver<PageRoute<dynamic>> {
   static final List<_OpenRoute> _openRoutes = [];
 
   static final List<String> _routeHistory = [];
+
+  /// Route arguments by route name, from the most recent push/replace of
+  /// that name.
   static final Map<String, dynamic> routeArguments = {};
+
+  /// Bumped on every navigation event and [clear], so the Routes tab can
+  /// rebuild.
   static final ValueNotifier<int> routeVersion = ValueNotifier(0);
 
   RouteInterceptor._();
 
+  /// The singleton observer instance to pass to
+  /// `MaterialApp.navigatorObservers`.
   static RouteObserver<PageRoute<dynamic>> get instance => _instance;
 
+  /// Logs a one-time initialization notice. Called once by
+  /// `FlutterDevToolkit.init`.
   static void init() {
     FlutterDevToolkit.logger.log('RouteInterceptor initialized');
   }
 
+  /// Names of routes currently on the navigator stack, oldest first. A name
+  /// appears once per time it's on the stack, so A → B → A lists `[A, B, A]`.
   static List<String> get routeStack =>
       List.unmodifiable(_openRoutes.map((r) => r.name));
 
+  /// A running log of push/pop/replace events, newest-appended, capped at
+  /// 1000 entries.
   static List<String> get routeHistory => List.unmodifiable(_routeHistory);
 
   /// Entry time per route name. If the same route is on the stack more than
