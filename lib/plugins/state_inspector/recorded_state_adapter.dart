@@ -5,7 +5,7 @@ import 'app_state_entry.dart';
 
 /// An adapter the host app pushes state changes into.
 ///
-/// The toolkit ships a first-class [BlocAdapter] because it already depends on
+/// The toolkit ships a first-class `BlocAdapter` because it already depends on
 /// `bloc`. Taking on `riverpod`, `provider`, `signals` and friends as
 /// dependencies just to observe them would force every consumer to resolve
 /// packages they may not use, so those frameworks are wired up from the app
@@ -51,6 +51,8 @@ import 'app_state_entry.dart';
 /// );
 /// ```
 class RecordedStateAdapter extends AppStateAdapter {
+  /// Creates an adapter labeled [name] in the inspector's dropdown, retaining
+  /// up to [maxEntries] recorded changes.
   RecordedStateAdapter({required this.name, this.maxEntries = 500})
     : assert(maxEntries > 0, 'maxEntries must be positive');
 
@@ -85,6 +87,7 @@ class RecordedStateAdapter extends AppStateAdapter {
     _version.value++;
   }
 
+  /// Discards every recorded change.
   void clear() {
     _entries.clear();
     _version.value++;

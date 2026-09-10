@@ -6,9 +6,20 @@ import '../../core/dev_toolkit_plugin.dart';
 import 'app_state_adapter.dart';
 import 'app_state_entry.dart';
 
+/// A custom plugin adding an "App State" tab that inspects state changes
+/// from one or more [AppStateAdapter]s (e.g. `BlocAdapter`,
+/// `RecordedStateAdapter`).
+///
+/// Unlike built-in plugins, this one is opt-in — register it explicitly:
+///
+/// ```dart
+/// FlutterDevToolkit.registerPlugin(AppStateInspectorPlugin([BlocAdapter()]));
+/// ```
 class AppStateInspectorPlugin extends DevToolkitPlugin {
+  /// The state sources shown in the tab's adapter dropdown.
   final List<AppStateAdapter> adapters;
 
+  /// Creates the plugin from one or more [adapters].
   AppStateInspectorPlugin(this.adapters);
 
   @override
@@ -26,9 +37,14 @@ class AppStateInspectorPlugin extends DevToolkitPlugin {
   }
 }
 
+/// The App State Inspector's UI: an adapter picker plus a list/detail view
+/// of that adapter's recorded state changes, split side-by-side on wide
+/// screens.
 class AppStateInspectorView extends StatefulWidget {
+  /// The state sources to choose between.
   final List<AppStateAdapter> adapters;
 
+  /// Creates the inspector view.
   const AppStateInspectorView({super.key, required this.adapters});
 
   @override

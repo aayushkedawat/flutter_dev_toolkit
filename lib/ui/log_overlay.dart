@@ -4,6 +4,9 @@ import '../core/default_logger.dart';
 import '../flutter_dev_toolkit.dart';
 import 'log_console.dart';
 
+/// The draggable floating action button that opens/closes the console.
+/// Stack it above your app via `MaterialApp.builder`; renders nothing when
+/// `FlutterDevToolkit.isEnabled` is false.
 class DevOverlay extends StatefulWidget {
   const DevOverlay({super.key});
 

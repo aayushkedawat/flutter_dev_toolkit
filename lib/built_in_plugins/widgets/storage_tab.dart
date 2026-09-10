@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/dev_console_theme.dart';
 import '../../core/storage_inspector_store.dart';
 
+/// The Storage tab's UI: searchable `SharedPreferences` entries with add,
+/// edit, and delete actions.
 class StorageTab extends StatefulWidget {
   const StorageTab({super.key});
 

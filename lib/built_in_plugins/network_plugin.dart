@@ -9,6 +9,8 @@ import '../../interceptors/network/network_log.dart';
 import 'widgets/network_mock_panel.dart';
 import 'widgets/network_tab.dart';
 
+/// The Network tab: captured `HttpInterceptor`/`DioNetworkInterceptor` calls,
+/// with mock-rule configuration ([buildConfig]) and JSON/HAR/cURL export.
 class NetworkPlugin extends DevToolkitPlugin {
   @override
   String get name => 'Network';

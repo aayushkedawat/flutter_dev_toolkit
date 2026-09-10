@@ -5,6 +5,8 @@ import 'package:flutter_dev_toolkit/core/device_info_store.dart';
 
 import '../../core/platform_probe.dart' as platform;
 
+/// The Device Info tab's UI: platform, OS, and hardware details, collected
+/// once per visit (and on rotation) via `device_info_plus`.
 class DeviceInfoTab extends StatefulWidget {
   const DeviceInfoTab({super.key});
   @override

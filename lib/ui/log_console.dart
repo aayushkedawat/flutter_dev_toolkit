@@ -5,6 +5,9 @@ import '../flutter_dev_toolkit.dart';
 import '../core/dev_toolkit_plugin.dart';
 import 'dev_toolkit_tab_sync.dart';
 
+/// The full-screen console: a themed `Scaffold` with one tab per registered
+/// plugin, an optional per-plugin config panel, and the light/dark theme
+/// toggle. Opened by `DevOverlay`.
 class DevConsole extends StatefulWidget {
   const DevConsole({super.key});
 

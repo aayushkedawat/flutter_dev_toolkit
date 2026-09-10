@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/dev_console_theme.dart';
 import '../../core/feature_flag_store.dart';
 
+/// The Flags tab's UI: every registered flag with a type-appropriate control
+/// (switch, dropdown, or editable text) and a per-flag reset button.
 class FeatureFlagsTab extends StatelessWidget {
   const FeatureFlagsTab({super.key});
 

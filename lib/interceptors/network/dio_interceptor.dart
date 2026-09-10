@@ -5,6 +5,14 @@ import '../../flutter_dev_toolkit.dart';
 import 'network_log.dart';
 import 'network_mock_store.dart';
 
+/// Records every request/response/error passing through a `Dio` instance
+/// into [NetworkLogStore], and honors [NetworkMockStore] rules before a
+/// request reaches the network.
+///
+/// ```dart
+/// final dio = Dio();
+/// dio.interceptors.add(DioNetworkInterceptor());
+/// ```
 class DioNetworkInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {

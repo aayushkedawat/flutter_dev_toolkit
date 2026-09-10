@@ -7,6 +7,8 @@ import '../core/feature_flag_store.dart';
 import '../core/share_utils.dart';
 import 'widgets/feature_flags_tab.dart';
 
+/// The Flags tab: view and flip app-registered feature flags, with export
+/// and reset-all actions. Backed by [FeatureFlagStore].
 class FeatureFlagsPlugin extends DevToolkitPlugin {
   @override
   String get name => 'Flags';

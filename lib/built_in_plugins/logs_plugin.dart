@@ -7,6 +7,8 @@ import 'package:flutter_dev_toolkit/core/share_utils.dart';
 import '../../core/dev_toolkit_plugin.dart';
 import '../flutter_dev_toolkit.dart';
 
+/// The Logs tab: entries from `FlutterDevToolkit.logger`, with level/tag
+/// filtering, export, and clear actions.
 class LogsPlugin extends DevToolkitPlugin {
   @override
   String get name => 'Logs';

@@ -50,6 +50,7 @@
 - Added GitHub Actions CI running format, analyze, test, and `pub publish --dry-run` on pushes and pull requests.
 - The example app no longer replaces the toolkit's `FlutterError.onError` handler, which silently disabled crash capture; it now chains to the previous handler.
 - The example app now has triggers for every tab — logging at each level, a successful and a failing request, a reported Flutter error, an unhandled async error, a jank burst, and a simulated deep link — so the 1.4.0 panels can actually be exercised.
+- Added `///` documentation comments across the public API in `lib/` — classes, constructors, methods, fields, and getters that previously had none. Raises dartdoc coverage ahead of publishing, and makes the API browsable on pub.dev without reading the source.
 
 ## 1.3.2
 
