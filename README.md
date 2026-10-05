@@ -367,6 +367,20 @@ You can export relevant data directly from each plugin’s tab:
 
 ---
 
+## 💖 Sponsors
+
+This package is maintained in my spare time. If it saves you time, consider
+[sponsoring me on GitHub](https://github.com/sponsors/aayushkedawat).
+Sponsorship funds bug fixes, documentation and keeping up with Flutter releases.
+
+### Backers
+
+<!-- sponsors -->
+_No backers yet. Be the first._
+<!-- /sponsors -->
+
+---
+
 ## 📄 License
 
 MIT
